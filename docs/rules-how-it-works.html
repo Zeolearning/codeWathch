@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>codeWatch 规则生成 · 工作原理</title>
+<style>
+  :root {
+    --bg: #0d1117; --card: #161b22; --border: #30363d;
+    --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
+    --green: #7ee787; --red: #ff7b72; --yellow: #f2cc60; --purple: #d2a8ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+    line-height:1.65; font-size:15px; }
+  .wrap { max-width:980px; margin:0 auto; padding:40px 24px 80px; }
+  h1 { font-size:30px; margin:0 0 8px; color:#fff; }
+  h2 { font-size:22px; margin:42px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border); color:var(--accent); }
+  h3 { font-size:17px; margin:28px 0 10px; color:#fff; }
+  h4 { font-size:15px; margin:20px 0 8px; color:var(--purple); }
+  p { margin:10px 0; }
+  .sub { color:var(--muted); font-size:14px; margin-top:0; }
+  code, pre { font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace; }
+  code { background:#1f2630; padding:1px 6px; border-radius:4px; color:var(--green); font-size:13px; }
+  pre { background:#010409; border:1px solid var(--border); border-radius:8px; padding:14px 16px;
+    overflow-x:auto; font-size:13px; line-height:1.5; margin:12px 0; }
+  pre code { background:none; padding:0; color:var(--text); }
+  .kw{color:#ff7b72;} .str{color:#a5d6ff;} .cm{color:#8b949e;} .fn{color:#d2a8ff;} .num{color:#79c0ff;}
+  table { border-collapse:collapse; width:100%; margin:12px 0; font-size:13px; }
+  th,td { border:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:#1f2630; color:#fff; }
+  .callout { border-left:3px solid var(--accent); background:#0d2137; padding:12px 16px; border-radius:0 6px 6px 0; margin:14px 0; }
+  .callout.green { border-left-color:var(--green); background:#0a2a1a; }
+  .callout.yellow { border-left-color:var(--yellow); background:#2a2410; }
+  .callout.red { border-left-color:var(--red); background:#2a1010; }
+  .pipeline { display:flex; gap:8px; flex-wrap:wrap; margin:18px 0; }
+  .stage { flex:1; min-width:160px; background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:12px; position:relative; }
+  .stage .n { font-size:12px; color:var(--muted); }
+  .stage .t { font-weight:600; color:#fff; margin:4px 0 2px; }
+  .stage .d { font-size:12px; color:var(--muted); }
+  .arrow { color:var(--accent); align-self:center; font-size:18px; }
+  .tag { display:inline-block; font-size:11px; padding:1px 7px; border-radius:10px; margin-right:4px; }
+  .tag.bug { background:#3a0d0d; color:var(--red); border:1px solid #6b1414; }
+  .tag.fix { background:#0d3a1d; color:var(--green); border:1px solid #145a2a; }
+  .tag.chg { background:#3a3010; color:var(--yellow); border:1px solid #5a4a14; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:720px){ .grid2{grid-template-columns:1fr;} }
+  .stat { display:inline-block; background:#0d3a1d; color:var(--green); padding:2px 10px; border-radius:4px; font-weight:600; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>codeWatch · 规则生成与测试工作原理</h1>
+<p class="sub">从一个 Defects4J 缺陷的 <code>BugAnalysis</code> 出发,自动创造一条 Semgrep 规则,使其在 <b>buggy 树命中</b>、<b>fixed 树静默</b>。本文以 <code>Lang-1</code> 真实跑通的产物为例讲解,并贴出实际代码。</p>
+
+<div class="callout">
+<b>这不是 RuleRefiner 的精化流程</b>。RuleRefiner 修一条<em>已存在</em>的 buggy 规则(跑 <code>semgrep --matching-explanations</code> 建谓词图 → 差分定位规则哪段判错)。codeWatch 是<em>从零创造</em>规则——没有规则可跑 explanation,所以只复用了 tree-sitter 解析 + <code>graph.diff</code> 的序列差分骨架,把语义从"规则执行路径的真值"重映射成"AST 节点在 buggy/fixed 的存在性"。
+</div>
+
+<h2>0 · 全景</h2>
+<div class="pipeline">
+  <div class="stage"><div class="n">阶段 1</div><div class="t">rule-gen-prep agent</div><div class="d">用 ReAct agent 探索 buggy/fixed 两棵树,语义选取相关方法对</div></div>
+  <div class="arrow">→</div>
+  <div class="stage"><div class="n">阶段 2</div><div class="t">AST 节点差分</div><div class="d">tree-sitter 解析 → 语句序列 → difflib 对齐 → 三类 delta</div></div>
+  <div class="arrow">→</div>
+  <div class="stage"><div class="n">阶段 3</div><div class="t">规则生成</div><div class="d">delta + root_cause + schema cheatsheet → LLM → Semgrep YAML</div></div>
+  <div class="arrow">→</div>
+  <div class="stage"><div class="n">阶段 4</div><div class="t">差分 oracle</div><div class="d">scan buggy 命中 affected_files ∧ scan fixed 静默</div></div>
+</div>
+
+<table>
+<tr><th>输入</th><th>产物</th></tr>
+<tr><td><code>BugAnalysis</code>(root_cause + affected_files + patch_src + modified_classes)</td>
+<td><code>Rule</code>(Semgrep YAML)+ <code>RuleEvaluation</code>(status / precision / recall)</td></tr>
+</table>
+
+<h2>1 · 阶段 1:rule-gen-prep agent(语义选取相关方法)</h2>
+
+<h3>为什么用 agent 而不是 diff?</h3>
+<p>开发者修复 diff(<code>patch_src</code>)只告诉你"机械改了哪些行",但<b>哪些方法对 bug 才是相关的</b>是语义判断——diff 会混入无关重构/空白改动。所以这一步交给一个 ReAct agent,以 <code>root_cause</code> + <code>affected_files</code> 为锚点,用现有只读工具探索两棵树,自主选出相关方法对。</p>
+
+<h3>单 RepoContext 覆盖两棵树的布局</h3>
+<p>checkout 把 buggy/fixed 放到公共父目录下,一个 <code>RepoContext</code> 即可让现有 7 个工具零改动地访问两棵树:</p>
+<pre><code><span class="cm"># rules/checkout.py</span>
+<span class="kw">def</span> <span class="fn">checkout_both</span>(project, bug_id, *, base_dir=<span class="kw">None</span>, refresh=<span class="kw">False</span>):
+    <span class="cm"># 布局:  tmp/rulegen-&lt;project&gt;-&lt;bug&gt;/
+    #        ├── buggy/   <- checkout_defect(version="buggy")
+    #        └── fixed/   <- checkout_defect(version="fixed")</span>
+    buggy_dir = Path(base_dir) / <span class="str">"buggy"</span>
+    fixed_dir = Path(base_dir) / <span class="str">"fixed"</span>
+    <span class="kw">if</span> refresh <span class="kw">or not</span> (buggy_dir / <span class="str">".git"</span>).exists():
+        checkout_defect(project, bug_id, version=<span class="str">"buggy"</span>, workdir=str(buggy_dir))
+    <span class="kw">if</span> refresh <span class="kw">or not</span> (fixed_dir / <span class="str">".git"</span>).exists():
+        checkout_defect(project, bug_id, version=<span class="str">"fixed"</span>, workdir=str(fixed_dir))
+    <span class="kw">return</span> Path(base_dir), buggy_dir, fixed_dir</code></pre>
+<p>agent 用 <code>read_file("buggy/src/...")</code> / <code>read_file("fixed/src/...")</code> 同时访问两棵树,路径 jail(<code>ensure_inside</code>)仍满足。两段式:ReAct 探索 → 结构化抽取 <code>RelevantSnippets</code>(镜像现有 <code>analyze_bug</code> 的做法)。</p>
+
+<h3>Lang-1 真实产物(snippets.json)</h3>
+<p>agent 选了 1 个方法对 <code>NumberUtils.createNumber</code> 的 hex 处理块:</p>
+<pre><code>{
+  <span class="str">"fqcn"</span>: <span class="str">"org.apache.commons.lang3.math.NumberUtils"</span>,
+  <span class="str">"method_signature"</span>: <span class="str">"public static Number createNumber(final String str)"</span>,
+  <span class="str">"buggy_source"</span>: <span class="str">"if (pfxLen > 0) { // we have a hex number
+    final int hexDigits = str.length() - pfxLen;
+    if (hexDigits > 16) { return createBigInteger(str); }
+    if (hexDigits > 8)  { return createLong(str); }
+    return createInteger(str);
+}"</span>,
+  <span class="str">"fixed_source"</span>: <span class="str">"if (pfxLen > 0) {
+    char firstSigDigit = 0; // strip leading zeroes
+    for(int i=pfxLen; i<str.length(); i++) { ... }   // 新增的前导零剥离循环
+    final int hexDigits = str.length() - pfxLen;
+    if (hexDigits > 16 || (hexDigits==16 && firstSigDigit>'7')) { ... }  // 加了溢出 guard
+    if (hexDigits > 8  || (hexDigits==8  && firstSigDigit>'7')) { ... }
+    return createInteger(str);
+}"</span>,
+  <span class="str">"why_relevant"</span>: <span class="str">"The fix strips leading zeros ... and adds overflow checks for hexDigits==8 or 16 with firstSigDigit>'7'"</span>
+}</code></pre>
+<div class="callout yellow"><b>注意</b>:agent 返回的是方法<em>体片段</em>(以 <code>if</code> 开头),不是完整方法声明。这对阶段 2 的解析是个坑(见下)。</div>
+
+<h2>2 · 阶段 2:AST 节点差分(核心细节)</h2>
+<p>这是从零创造规则的关键信号源:找出"buggy 中存在、fixed 中消除/改变"的结构节点,直接告诉 LLM"规则该匹配什么 / 该避开什么"。</p>
+
+<h3>2.1 tree-sitter 解析 + 两种 wrap 策略</h3>
+<p>复用 codeWatch 已有的 tree-sitter-java parser(<code>tools/java_symbols.py</code> 暴露的 <code>PARSER</code>)。但阶段 1 返回的片段不一定是完整方法声明,直接 <code>class _Dummy { if(...) {...} }</code> 会被 tree-sitter 误解析(<code>if(x)</code> 被当成构造器调用 → 假 <code>constructor_declaration</code>)。所以用两种 wrap 策略,取先成功的:</p>
+
+<pre><code><span class="cm"># rules/ast_diff.py</span>
+<span class="kw">def</span> <span class="fn">_wrap_as_class</span>(method_source):
+    <span class="cm"># 策略1:片段本身是完整 method_declaration</span>
+    <span class="kw">return</span> <span class="str">f"class _DiffDummy {{\n{method_source}\n}}\n"</span>
+
+<span class="kw">def</span> <span class="fn">_wrap_as_body</span>(method_source):
+    <span class="cm"># 策略2:片段是方法体/语句 → 包成 _m 的方法体</span>
+    <span class="kw">return</span> <span class="str">f"class _DiffDummy {{\nvoid _m() {{\n{method_source}\n}}\n}}\n"</span>
+
+<span class="kw">def</span> <span class="fn">_parse_method_block</span>(method_source):
+    <span class="kw">for</span> wrapper <span class="kw">in</span> (_wrap_as_class, _wrap_as_body):
+        source = wrapper(method_source).encode(<span class="str">"utf-8"</span>)
+        tree = PARSER.parse(source)
+        <span class="kw">for</span> mtype <span class="kw">in</span> (<span class="str">"method_declaration"</span>, <span class="str">"constructor_declaration"</span>):
+            <span class="kw">for</span> node <span class="kw">in</span> _find_all_children(tree.root_node, mtype):
+                body = _find_child(node, <span class="str">"block"</span>)
+                <span class="kw">if</span> body <span class="kw">is not None</span>:
+                    <span class="kw">return</span> body, source      <span class="cm"># 返回方法体的 block 节点</span>
+    <span class="kw">return</span> <span class="kw">None</span>, <span class="kw">None</span></code></pre>
+
+<div class="callout"><b>Lang-1 的实际路径</b>:片段以 <code>if</code> 开头 → 策略1 误解析成 constructor → 但策略2(<code>void _m() { if(...) {...} }</code>)是合法 Java,找到 <code>_m</code> 的 block,成功返回。block 的直接命名子节点就是那条 <code>if_statement</code>。</div>
+
+<h3>2.2 语句序列抽取</h3>
+<p>取方法体 block 的直接命名子节点(跳过注释),每个节点算一个签名 <code>(node.type, 规范化文本)</code>。规范化 = 压平所有空白,让 <code>foo( )</code> 和 <code>foo()</code> 视作相同。</p>
+<pre><code><span class="kw">def</span> <span class="fn">_statement_sequence</span>(block, source):
+    seq = []
+    <span class="kw">for</span> i <span class="kw">in</span> range(block.child_count):
+        child = block.child(i)
+        <span class="kw">if not</span> child.is_named <span class="kw">or</span> child.type <span class="kw">in</span> (<span class="str">"line_comment"</span>, <span class="str">"block_comment"</span>):
+            <span class="kw">continue</span>
+        seq.append((_signature(child, source), child))   <span class="cm"># ((type, text), node)</span>
+    <span class="kw">return</span> seq
+
+<span class="kw">def</span> <span class="fn">_signature</span>(node, source):
+    <span class="kw">return</span> (node.type, <span class="str">" "</span>.join(_text(node, source).split()))   <span class="cm"># 规范化</span></code></pre>
+<p><b>为什么是语句级而非全树?</b>Semgrep pattern 匹配的是语句/表达式粒度。更深子节点会和父语句的文本重复,反而嘈杂。语句级差分直接对口规则该匹配的语法单元。</p>
+
+<h3>2.3 difflib 序列对齐(改造 graph.diff 的骨架)</h3>
+<p>RuleRefiner 的 <code>graph.diff(bad_path, good_path)</code> 比的是<b>同一规则图的两条执行路径</b>(节点带"子 pattern 是否匹配"真值)。这里把它改造成<b>两份独立的语句序列</b>对齐,真值语义从"子 pattern 是否匹配"重映射为"节点在 buggy/fixed 是否存在"。用 stdlib <code>difflib.SequenceMatcher</code> 直接拿对齐结果:</p>
+
+<pre><code>sm = difflib.SequenceMatcher(a=buggy_sigs, b=fixed_sigs, autojunk=<span class="kw">False</span>)
+<span class="kw">for</span> tag, i1, i2, j1, j2 <span class="kw">in</span> sm.get_opcodes():
+    <span class="kw">if</span> tag == <span class="str">"equal"</span>: <span class="kw">continue</span>                              <span class="cm"># 两边都有的语句 → 无差分</span>
+    <span class="kw">if</span> tag == <span class="str">"delete"</span>:                               <span class="cm"># buggy 有、fixed 无</span>
+        <span class="kw">for</span> i <span class="kw">in</span> range(i1, i2):
+            deltas.append(ASTNodeDelta(node_type=..., buggy_text=...,
+                                       fixed_text=<span class="kw">None</span>, change=<span class="str">"added_in_buggy"</span>))
+    <span class="kw">if</span> tag == <span class="str">"insert"</span>:                               <span class="cm"># fixed 有、buggy 无</span>
+        <span class="kw">for</span> j <span class="kw">in</span> range(j1, j2):
+            deltas.append(ASTNodeDelta(node_type=..., buggy_text=<span class="kw">None</span>,
+                                       fixed_text=..., change=<span class="str">"added_in_fixed"</span>))
+    <span class="kw">if</span> tag == <span class="str">"replace"</span>:                              <span class="cm"># 同位置但文本不同</span>
+        deltas.append(ASTNodeDelta(..., change=<span class="str">"changed"</span>,
+                                   buggy_text=..., fixed_text=...))</code></pre>
+
+<table>
+<tr><th>difflib opcode</th><th>含义</th><th>映射成</th><th>规则生成语义</th></tr>
+<tr><td><code>equal</code></td><td>两边签名相同</td><td>(无 delta)</td><td>规则无需关注</td></tr>
+<tr><td><code>delete</code></td><td>buggy 有、fixed 无</td><td><span class="tag bug">added_in_buggy</span></td><td><b>bug 模式,规则该匹配</b></td></tr>
+<tr><td><code>insert</code></td><td>fixed 有、buggy 无</td><td><span class="tag fix">added_in_fixed</span></td><td><b>修复引入(如 guard),规则该避开</b></td></tr>
+<tr><td><code>replace</code></td><td>同位置文本不同</td><td><span class="tag chg">changed</span></td><td>对照两版文本判断</td></tr>
+</table>
+
+<h4>教学小例子:<code>yaml.load</code> → <code>yaml.safe_load</code></h4>
+<pre><code>buggy:  Object o = <span class="kw">yaml.load</span>(s);      fixed:  Object o = <span class="kw">yaml.safe_load</span>(s);</code></pre>
+<p>block 的直接子节点都是一条 <code>local_variable_declaration</code>,签名因文本不同 → difflib 给一个 <code>replace</code> opcode → 一条 <span class="tag chg">changed</span> delta:<code>buggy_text="Object o = yaml.load(s);"</code> → <code>fixed_text="Object o = yaml.safe_load(s);"</code>。LLM 据此写 <code>pattern: yaml.load(...)</code> + <code>pattern-not: yaml.safe_load(...)</code>。</p>
+
+<h4>Lang-1 真实 delta(修复后)</h4>
+<p>buggy 和 fixed 的方法体在策略2 下各只有一条 <code>if_statement</code> 直接子节点(pfxLen 那个外层 if),签名因条件文本不同 → 一个 <code>replace</code> → 一条 <span class="tag chg">changed</span>:</p>
+<pre><code>{
+  <span class="str">"node_type"</span>: <span class="str">"if_statement"</span>,
+  <span class="str">"change"</span>: <span class="str">"changed"</span>,
+  <span class="str">"buggy_text"</span>: <span class="str">"if (pfxLen > 0) { ... if (hexDigits > 16) {...} if (hexDigits > 8) {...} ... }"</span>,
+  <span class="str">"fixed_text"</span>: <span class="str">"if (pfxLen > 0) { ... if (hexDigits > 16 || (hexDigits==16 && firstSigDigit>'7')) {...} ... }"</span>
+}</code></pre>
+<div class="callout green">这条 delta 把"buggy 用裸 <code>hexDigits > 16</code>、fixed 加了 <code>|| (... && firstSigDigit>'7')</code> guard"的核心对照连同两版完整文本喂给 LLM——正是规则该匹配 vs 该避开的关键。</div>
+
+<h3>2.4 与 RuleRefiner graph.diff 的关系</h3>
+<table>
+<tr><th>维度</th><th>RuleRefiner <code>graph.diff</code></th><th>codeWatch <code>ast_diff</code></th></tr>
+<tr><td>输入</td><td>同一规则图的两条<b>执行路径</b>(节点带 match 真值)</td><td>两份独立<b>源码语句序列</b>(节点带存在性)</td></tr>
+<tr><td>前提</td><td>已有一条规则可跑 <code>--matching-explanations</code></td><td>无需规则(创造场景)</td></tr>
+<tr><td>对齐</td><td>按 node_id 找交集 + 区间</td><td>按签名(type+规范化文本)LCS 对齐</td></tr>
+<tr><td>输出语义</td><td>规则哪段子 pattern 在失败用例上判错</td><td>哪个语句在 buggy 有/fixed 无(或反之)</td></tr>
+<tr><td>复用面</td><td colspan="2">序列对齐 + 交集/区间检测的<b>算法骨架</b>;真值比较 → 存在性比较的语义重映射</td></tr>
+</table>
+
+<h2>3 · 阶段 3:规则生成(LLM)</h2>
+<h3>3.1 prompt 组装</h3>
+<p>把阶段 1/2 的产物 + 规则 schema cheatsheet 喂给 LLM:</p>
+<pre><code><span class="cm"># rules/prompts.py</span>
+<span class="kw">def</span> <span class="fn">build_generation_prompt</span>(fix_delta, analysis):
+    <span class="kw">return</span> <span class="str">f"""Bug: {analysis.bug_id}
+
+Root cause:
+{analysis.root_cause}
+
+Affected locations (file:line — the rule SHOULD fire here on the buggy tree):
+{affected}
+
+### Method: {md.method.fqcn} :: {md.method.method_signature}
+Buggy source: ```java ... ```
+Fixed source: ```java ... ```
+Structural delta:
+- [BUG PATTERN — rule MUST match] if_statement: {d.buggy_text}     <span class="cm"># added_in_buggy</span>
+- [FIX INTRODUCED — rule should NOT match] ... {d.fixed_text}      <span class="cm"># added_in_fixed</span>
+- [CHANGED] ...                                                    <span class="cm"># changed</span>
+
+Semgrep schema reference: {_SEMGREP_SCHEMA_CHEATSHEET}   <span class="cm"># 句法模式 + 污点模式操作符表</span>
+
+Write ONE Semgrep YAML rule (Java) that matches the bug pattern and stays silent on the fixed version.
+Emit the rule inside &lt;FINAL_ANSWER&gt;```yaml ... ```&lt;/FINAL_ANSWER&gt;."""</span></code></pre>
+<p>输出契约沿用 RuleRefiner 的 <code>&lt;FINAL_ANSWER&gt;```yaml ... ```&lt;/FINAL_ANSWER&gt;</code>,<code>postprocess</code> 用正则抽 fenced yaml 块。</p>
+
+<h3>3.2 Lang-1 实际生成的规则</h3>
+<pre><code>rules:
+- id: d4j-lang1-r1
+  languages: [java]
+  severity: ERROR
+  message: <span class="str">"Hex number parsing missing overflow checks for leading zeros and type boundaries."</span>
+  patterns:
+  - pattern-inside: |              <span class="cm"># 锚定 hex 处理上下文</span>
+      if (pfxLen > 0) { ... final int $HEXDIGITS = ... - ...; ... }
+  - pattern-either:                <span class="cm"># 匹配 buggy 的裸分支(bug 模式)</span>
+    - pattern: if ($HEXDIGITS > 16) { return createBigInteger(...); }
+    - pattern: if ($HEXDIGITS > 8)  { return createLong(...); }
+  - pattern-not: |                 <span class="cm"># 排除 fixed 的 guard(修复引入)</span>
+      if ($HEXDIGITS > 16 || ($HEXDIGITS == 16 && $FIRST > '7')) { ... }
+  - pattern-not: |
+      if ($HEXDIGITS > 8 || ($HEXDIGITS == 8 && $FIRST > '7')) { ... }</code></pre>
+<p>LLM 自述(<code>metadata.explanation</code>):</p>
+<pre><code><span class="cm">// deepseek-v4-flash 的推理</span>
+The bug is the missing overflow checks (`(hexDigits==16 && firstSigDigit>'7')` and
+`(hexDigits==8 && firstSigDigit>'7')`) and the absence of leading zero stripping.
+The rule matches the simplified `if (hexDigits > 16)` / `if (hexDigits > 8)` (buggy) and
+uses `pattern-not` to exclude the fixed version where these have the additional `||` clauses.
+This ensures the rule fires only on the buggy tree.</code></pre>
+
+<h2>4 · 阶段 4:差分 oracle</h2>
+<h3>4.1 为什么不走 <code>semgrep test</code> + marker?</h3>
+<p>RuleRefiner 靠测试文件里的 <code>// ruleid:</code> / <code>// ok:</code> 行标记算期望命中。Defects4J 测试文件没有这些标记。所以 codeWatch 直接 <code>semgrep scan</code> 两棵树,用 <code>BugAnalysis.affected_files</code> 的精确 file:line 作期望——<b>消解了 marker 缺失问题</b>。</p>
+
+<h3>4.2 oracle 与状态判定</h3>
+<pre><code><span class="cm"># rules/evaluator.py</span>
+buggy_hits = scan_tree(rule.yaml, buggy_dir)   <span class="cm"># semgrep scan --json --config rule buggy/</span>
+fixed_hits = scan_tree(rule.yaml, fixed_dir)   <span class="cm"># semgrep scan --json --config rule fixed/</span>
+
+hit_expected = intersect(buggy_map, expected_map)     <span class="cm"># 命中 ∩ 期望行</span>
+recall  = |hit_expected| / |all_expected|            <span class="cm"># 期望行被命中的比例</span>
+precision = |hit_expected| / |reported|             <span class="cm"># 命中中落在期望行的比例</span>
+
+<span class="kw">if</span> fixed_map:                 status = <span class="str">"FP"</span>      <span class="cm"># fixed 树有命中 → 规则没抓住修复点</span>
+<span class="kw">elif not</span> hit_expected:       status = <span class="str">"FN"</span>      <span class="cm"># buggy 上没命中期望行 → 漏检</span>
+<span class="kw">else</span>:                          status = <span class="str">"PASS"</span>    <span class="cm"># buggy 命中 ∧ fixed 静默</span></code></pre>
+<p>优先级:<code>SYNTAX_ERROR &gt; FP &gt; FN &gt; PASS</code>。</p>
+
+<h3>4.3 Lang-1 真实评测结果</h3>
+<table>
+<tr><th>指标</th><th>值</th><th>说明</th></tr>
+<tr><td>status</td><td><span class="stat">PASS</span></td><td>buggy 命中期望行 ∧ fixed 零命中</td></tr>
+<tr><td>precision</td><td>1.0</td><td>所有 buggy 命中都落在 affected_files 的 464-474 行内</td></tr>
+<tr><td>recall</td><td>0.5455</td><td>命中了 468、471 两行;affected_files 是 464-474 共 11 行(规则匹配的是分支语句行,非全部)</td></tr>
+<tr><td>fired_on_buggy</td><td><code>NumberUtils.java:468, :471</code></td><td>两个 <code>if</code> 分支被命中</td></tr>
+<tr><td>fired_on_fixed</td><td><code>(none)</code></td><td><b>fixed 树完全静默</b> — <code>pattern-not</code> 成功排除了 guard</td></tr>
+</table>
+
+<h2>5 · Lang-1 端到端走查</h2>
+<div class="grid2">
+<div>
+<h4>① 输入(已有)</h4>
+<pre><code>BugAnalysis:
+ root_cause: hex parsing fails
+   WHEN (hexDigits==8 AND first>'7')
+     OR (hexDigits==16 AND first>'7')
+     OR (leading zeros not stripped)
+ affected_files: NumberUtils.java:464-474
+ patch_src: (git diff, 新增剥零循环 + guard)
+ modified_classes: [...NumberUtils]</code></pre>
+</div>
+<div>
+<h4>② prep agent 选取</h4>
+<pre><code>RelevantSnippets:
+ 1 method: createNumber 的
+ hex 处理块 (buggy/fixed 成对)
+ why: fix 加了剥零循环 +
+ 溢出 guard</code></pre>
+</div>
+</div>
+<div class="grid2">
+<div>
+<h4>③ AST 差分</h4>
+<pre><code>FixDelta:
+ 1 个 method_delta
+ deltas:
+  [changed] if_statement
+    buggy: if(pfxLen>0){ if(hex>16)... if(hex>8)... }
+    fixed: if(pfxLen>0){ if(hex>16||...) ... }</code></pre>
+</div>
+<div>
+<h4>④ 规则生成</h4>
+<pre><code>Rule d4j-lang1-r1:
+ pattern-inside (hex 上下文)
+ pattern-either (buggy 裸分支)
+ pattern-not ×2 (排除 fixed guard)
+ validate: ok</code></pre>
+</div>
+</div>
+<div class="callout green" style="margin-top:14px">
+<h4 style="margin-top:0;color:var(--green)">⑤ oracle 判定:PASS</h4>
+scan buggy → 命中 :468 / :471(落在 464-474 期望内 → precision 1.0) · scan fixed → 零命中(规则静默)。recall 0.5455 是因为 affected_files 标的是整段 11 行,而规则只在两个 if 分支行命中——这是行级 oracle 的粒度差异,不影响"buggy 命中 + fixed 静默"的核心判定。
+</div>
+
+<h2>6 · 复用与改造一览</h2>
+<table>
+<tr><th>来自 RuleRefiner</th><th>怎么用</th></tr>
+<tr><td><code>ts_cfg.TSHelper.gen_ast</code> 思路</td><td>复用 tree-sitter-java 解析(实际用 codeWatch 自己的 <code>java_symbols.PARSER</code>)</td></tr>
+<tr><td><code>graph.diff</code> 序列对齐骨架</td><td>改造成 difflib 对两份语句序列做 LCS,真值→存在性</td></tr>
+<tr><td><code>postprocess</code>(<code>&lt;FINAL_ANSWER&gt;```yaml```</code>)</td><td>直接移植,抽 LLM 输出的 yaml 块</td></tr>
+<tr><td><code>semgrep scan/validate</code> 子进程封装</td><td>重写为 clean subprocess(免 shell=True)</td></tr>
+<tr><td>差分 oracle 思想(regression+verify_fix)</td><td>重映射为 scan buggy + scan fixed</td></tr>
+</table>
+<table>
+<tr><th>砍掉的</th><th>理由</th></tr>
+<tr><td><code>semgrep2nx</code> 谓词图 / <code>lcp_locate</code> / <code>align</code> / <code>is_true</code></td><td>需先有规则跑 <code>--matching-explanations</code>,创造场景无规则</td></tr>
+<tr><td>三段验证 syntax/regression/verify_fix</td><td>简化为 scan buggy + scan fixed</td></tr>
+<tr><td><code>semgrep_syntax.do_fix</code> 语法自动修复</td><td>可选后置,非核心</td></tr>
+</table>
+
+<h2>7 · 一键复现</h2>
+<pre><code><span class="cm"># 单 bug 完整管线(prep agent → AST 差分 → 生成 → 评测)</span>
+uv run code-watch-rules run -p Lang -b 1
+
+<span class="cm"># 批量 + 报告</span>
+uv run code-watch-rules batch --bugs <span class="str">"Lang:1-5"</span></code></pre>
+<p class="sub">产物:<code>output/d4j-Lang-1-{snippets,fixdelta,rule,eval}.json</code> 与 <code>output/rules-report.{md,csv}</code>。</p>
+
+</div>
+</body>
+</html>

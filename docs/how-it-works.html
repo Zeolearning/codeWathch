@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Watch — 构建记录</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1c25;
+    --border: #2a2d3a;
+    --text: #e1e4eb;
+    --text-dim: #8b90a0;
+    --accent: #7c5cfc;
+    --accent2: #3b82f6;
+    --green: #34d399;
+    --orange: #f59e0b;
+    --pink: #ec4899;
+    --code-bg: #141620;
+    --line-hl: #1e2030;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0;
+  }
+  .hero {
+    background: linear-gradient(135deg, #1a1c25 0%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 56px 24px 40px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    color: var(--text-dim);
+    margin-top: 8px;
+    font-size: 1.05rem;
+  }
+  .hero .badge {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background: rgba(124,92,252,0.15);
+    color: var(--accent);
+    font-size: 0.82rem;
+    border: 1px solid rgba(124,92,252,0.25);
+  }
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 40px;
+  }
+  .toc h2 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+  .toc ul { list-style: none }
+  .toc li { margin: 4px 0 }
+  .toc a {
+    color: var(--accent2);
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+  .toc a:hover { text-decoration: underline }
+  section { margin-bottom: 52px }
+  section h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  section h2 .section-num {
+    color: var(--text-dim);
+    font-weight: 400;
+    margin-right: 8px;
+  }
+  section h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 20px 0 8px;
+    color: var(--accent2);
+  }
+  section p { margin: 8px 0; color: #c8ccd8 }
+  .code-block {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 12px 0;
+    overflow: hidden;
+  }
+  .code-block .label {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 14px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    font-family: SFMono-Regular, Consolas, monospace;
+  }
+  .code-block .label .dot {
+    width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+  }
+  .code-block .label .dot.purple { background: var(--accent) }
+  .code-block .label .dot.blue   { background: var(--accent2) }
+  .code-block .label .dot.green  { background: var(--green) }
+  .code-block .label .dot.orange { background: var(--orange) }
+  .code-block pre {
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", monospace;
+    tab-size: 2;
+  }
+  .code-block code { font-family: inherit }
+  .hl-comment { color: #5c6370 }
+  .hl-keyword { color: #c678dd }
+  .hl-string  { color: #98c379 }
+  .hl-func    { color: #61afef }
+  .hl-var     { color: #e06c75 }
+  .hl-number  { color: #d19a66 }
+  .hl-builtin { color: #56b6c2 }
+
+  .arch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  @media (max-width: 640px) { .arch-grid { grid-template-columns: 1fr } }
+  .arch-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .arch-card h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .arch-card p { font-size: 0.85rem; color: var(--text-dim); margin: 0 }
+  .arch-card .file { font-family: SFMono-Regular, Consolas, monospace; font-size: 0.78rem; color: var(--accent); margin-top: 6px; display: block }
+
+  .flow-diagram {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 16px 0;
+    font-family: SFMono-Regular, Consolas, monospace;
+    font-size: 0.85rem;
+    text-align: center;
+    line-height: 2.2;
+  }
+  .flow-diagram .arrow { color: var(--text-dim); font-size: 0.7rem }
+  .flow-diagram .node {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 6px;
+    background: rgba(124,92,252,0.12);
+    border: 1px solid rgba(124,92,252,0.25);
+    color: var(--accent);
+    margin: 0 4px;
+    font-size: 0.8rem;
+  }
+  .flow-diagram .node.blue  { border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.1); color: var(--accent2) }
+  .flow-diagram .node.green { border-color: rgba(52,211,153,0.3); background: rgba(52,211,153,0.1); color: var(--green) }
+
+  .tool-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(42,45,58,0.5);
+  }
+  .tool-row:last-child { border-bottom: none }
+  .tool-icon {
+    flex-shrink: 0;
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    color: #fff;
+  }
+  .tool-icon.read    { background: #3b82f6 }
+  .tool-icon.search  { background: #8b5cf6 }
+  .tool-icon.dir     { background: #10b981 }
+  .tool-icon.java    { background: #ec4899 }
+  .tool-icon.bash    { background: #f59e0b }
+  .tool-body { flex: 1; min-width: 0 }
+  .tool-body h4 { font-size: 0.9rem; font-weight: 600; margin: 0 }
+  .tool-body p  { font-size: 0.83rem; color: var(--text-dim); margin: 2px 0 0 }
+  .tool-body .sig {
+    font-family: SFMono-Regular, Consolas, monospace;
+    font-size: 0.78rem;
+    color: var(--accent2);
+    background: rgba(59,130,246,0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+
+  .extra-list { list-style: none; margin: 12px 0 }
+  .extra-list li {
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+  .extra-list li strong { color: var(--accent2) }
+  .extra-list li p { margin: 4px 0 0; font-size: 0.85rem; color: var(--text-dim) }
+  .extra-list li .code-inline {
+    font-family: SFMono-Regular, Consolas, monospace;
+    font-size: 0.78rem;
+    color: var(--pink);
+    background: rgba(236,72,153,0.08);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .prompt-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: #c8ccd8;
+  }
+  .prompt-box .prompt-comment { color: #5c6370; font-style: italic; font-size: 0.8rem }
+  .prompt-box code { background: rgba(124,92,252,0.1); padding: 1px 5px; border-radius: 3px; font-size: 0.8rem; color: var(--accent) }
+
+  .footer {
+    text-align: center;
+    padding: 32px 24px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.85rem;
+  }
+  .footer a { color: var(--accent2); text-decoration: none }
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>code-watch</h1>
+  <p>Java 代码阅读 Agent · 基于 langchain + langsmith 构建</p>
+  <span class="badge">参考 opencode · ReAct agent · tree-sitter 解析</span>
+</div>
+
+<div class="container">
+
+<!-- ===== TOC ===== -->
+<div class="toc">
+  <h2>目录</h2>
+  <ul>
+    <li><a href="#arch">1  分层结构</a></li>
+    <li><a href="#why-ast">1.5  为什么需要 AST 解析？</a></li>
+    <li><a href="#prompt">2  提示词（Prompts）</a></li>
+    <li><a href="#tools">3  Function Call（工具系统）</a></li>
+    <li><a href="#extra">4  额外处理</a></li>
+  </ul>
+</div>
+
+<!-- ===== 1 分层结构 ===== -->
+<section id="arch">
+  <h2><span class="section-num">1</span>分层结构</h2>
+  <p>
+    项目严格分层，引用 <strong>opencode</strong> 的「工具集 + LLM ReAct 循环」设计，但使用
+    langchain 生态独立实现。整体分为 4 层：
+  </p>
+
+  <div class="flow-diagram">
+    <span class="node">CLI</span>
+    <span class="arrow">→</span>
+    <span class="node blue">Agent</span>
+    <span class="arrow">→</span>
+    <span class="node green">Tools</span>
+    <span class="arrow">→</span>
+    Java Repo
+    <br>
+    <span style="font-size:0.75rem; color:var(--text-dim)">
+      langgraph create_react_agent · ReAct loop
+    </span>
+  </div>
+
+  <div class="arch-grid">
+    <div class="arch-card">
+      <h4>🔹 Config / Context</h4>
+      <p>环境变量加载、仓库根路径、路径安全校验。所有工具通过 Context 绑定 repo_root。</p>
+      <span class="file">config.py · context.py</span>
+    </div>
+    <div class="arch-card">
+      <h4>🔹 Tools（7 个）</h4>
+      <p>读文件、glob、grep、目录列表、java_symbols、java_index、bash。闭包注入 Context。</p>
+      <span class="file">tools/*.py</span>
+    </div>
+    <div class="arch-card">
+      <h4>🔹 Agent</h4>
+      <p>使用 <code>langgraph.prebuilt.create_react_agent</code> 构建。LLM + Tools + SystemPrompt → compiled graph。</p>
+      <span class="file">agent.py · state.py</span>
+    </div>
+    <div class="arch-card">
+      <h4>🔹 CLI / 集成入口</h4>
+      <p>Typer REPL，也可作为 Python library 直接 <code>build_agent(repo_path)</code> 调用。</p>
+      <span class="file">cli.py · __init__.py</span>
+    </div>
+  </div>
+
+  <h3>关键设计：闭包绑定 Context</h3>
+  <p>每个工具函数通过工厂函数 <code>make_xxx_tool(ctx: RepoContext)</code> 创建，<code>RepoContext</code>
+    在构建时注入 repo_root，所有后续调用不需要再传路径——在用户的工作流视角里是透明的：</p>
+
+  <div class="code-block">
+    <div class="label"><span class="dot purple"></span> tools/read_file.py — 工厂模式</div>
+    <pre><code><span class="hl-keyword">def</span> <span class="hl-func">make_read_file_tool</span>(ctx: RepoContext):
+    <span class="hl-builtin">@tool</span>
+    <span class="hl-keyword">def</span> <span class="hl-func">read_file</span>(path: <span class="hl-builtin">str</span>, offset: <span class="hl-builtin">int</span> = <span class="hl-number">0</span>, limit: <span class="hl-builtin">int</span> = <span class="hl-number">2000</span>) -> <span class="hl-builtin">str</span>:
+        resolved = ctx.in_repo_path(path)       <span class="hl-comment"># ← 自动限制在 repo 内</span>
+        lines = resolved.read_text().splitlines()
+        <span class="hl-keyword">return</span> <span class="hl-string">""</span>.join(lines[offset:offset+limit])
+    <span class="hl-keyword">return</span> read_file</code></pre>
+  </div>
+</section>
+
+<!-- ===== 1.5 为什么用 AST ===== -->
+<section id="why-ast">
+  <h2><span class="section-num">1.5</span>为什么需要 AST 解析？</h2>
+  <p>
+    <code>java_symbols</code> 和 <code>java_index</code> 是这个 agent 区别于
+    "grep + read_file 组合" 的核心价值。要理解它们为什么强大，需要先理解
+    <strong>tree-sitter 如何"看懂"Java 代码</strong>。
+  </p>
+
+  <h3>1.5.1 首先，tree-sitter 是什么？</h3>
+  <p>
+    tree-sitter 是一个<strong>增量解析器</strong>，它根据一个<strong>语言语法定义文件</strong>
+    （grammar.js）把源码解析成<strong>具体的语法树（CST，不是 AST）</strong>。
+    每一行代码、每一个字符在树里都有一个对应的节点。关键点：
+  </p>
+  <ul style="color:var(--text-dim);font-size:0.88rem;list-style:disc;padding-left:20px;line-height:1.8">
+    <li>语法文件由语言作者编写，精确描述了该语言的 <strong>每一个语法规则</strong></li>
+    <li>解析结果是确定的——对同一段代码，100 次解析得到 <strong>完全相同的树</strong></li>
+    <li>注释、字符串字面量、空格在树中有自己的节点类型，不会和代码逻辑混淆</li>
+  </ul>
+
+  <p style="margin-top:12px">
+    tree-sitter-java 的语法文件定义了大约 <strong>80+ 种节点类型</strong>，包括：
+    <code>class_declaration</code>、<code>method_declaration</code>、<code>field_declaration</code>、
+    <code>marker_annotation</code>、<code>annotation</code>、<code>block_comment</code>、
+    <code>line_comment</code>、<code>string_literal</code>... 每种节点在树中有明确的
+    <strong>层次关系</strong>和<strong>字段名</strong>。
+  </p>
+
+  <h3>1.5.2 看看实际的树是什么样</h3>
+  <p>用一段最简单的 Java 代码做演示。tree-sitter 解析后生成这样的树结构：</p>
+
+  <div style="display:grid;grid-template-columns:2fr 3fr;gap:12px;margin:12px 0">
+    <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.8rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.6">
+      <span style="color:#5c6370">// 输入源码</span><br>
+      <span style="color:#98c379">@RestController</span><br>
+      <span style="color:#c678dd">public class</span> <span style="color:#61afef">UserController</span> {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#98c379">@GetMapping</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#c678dd">public</span> List&lt;User&gt; <span style="color:#61afef">getAllUsers</span>() {}<br>
+      }
+    </div>
+    <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.78rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.45;overflow-x:auto">
+      <span style="color:#5c6370"># 解析后的树（简化）</span><br>
+      <span style="color:#c678dd">program</span><br>
+      └── <span style="color:#c678dd">class_declaration</span> [<span style="color:#d19a66">name</span>=UserController]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#c678dd">modifiers</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;└── <span style="color:#c678dd">marker_annotation</span> [<span style="color:#d19a66">name</span>=RestController]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#c678dd">class</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#c678dd">identifier</span> [<span style="color:#d19a66">name</span>=UserController]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:#c678dd">class_body</span> [<span style="color:#d19a66">body</span>]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:#c678dd">method_declaration</span> [<span style="color:#d19a66">name</span>=getAllUsers]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#c678dd">modifiers</span><br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;└── <span style="color:#c678dd">marker_annotation</span> [<span style="color:#d19a66">name</span>=GetMapping]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#c678dd">type_identifier</span> [<span style="color:#d19a66">type</span>=List&lt;User&gt;]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── <span style="color:#c678dd">identifier</span> [<span style="color:#d19a66">name</span>=getAllUsers]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── <span style="color:#c678dd">block</span> [<span style="color:#d19a66">body</span>]
+    </div>
+  </div>
+
+  <p>注意几个关键点：</p>
+  <ul style="color:var(--text-dim);font-size:0.88rem;list-style:disc;padding-left:20px;line-height:1.8">
+    <li>
+      <code>marker_annotation</code> 是 <code>modifiers</code> 的子节点——在语法层面，
+      <strong>注解是修饰符的一种</strong>，而不是"某行以 @ 开头的字符串"
+    </li>
+    <li>
+      <code>class_declaration</code> 和 <code>method_declaration</code> 各自有独立的
+      <code>modifiers</code> 子节点——<strong>注解和它修饰的目标在树中有明确的父子关系</strong>
+    </li>
+    <li>
+      <code>block_comment</code>、<code>line_comment</code>、<code>string_literal</code>
+      节点类型完全不同——注释里的 <code>@GetMapping</code> 永远是一个文本节点的一部分，
+      不会被解析成 <code>marker_annotation</code>
+    </li>
+  </ul>
+
+  <h3>1.5.3 代码是怎么遍历这棵树的？</h3>
+  <p>
+    有了这棵树，要找到"所有的 <code>@RestController</code> 类"就变成了一个<strong>树遍历问题</strong>，
+    而不是"字符串搜索问题"。来看实际的遍历代码：
+  </p>
+
+  <div class="code-block">
+    <div class="label"><span class="dot purple"></span> java_symbols.py — 树的遍历逻辑</div>
+    <pre><code><span class="hl-comment"># 第一步：解析源码 → 得到树</span>
+tree = PARSER.parse(source)
+root = tree.root_node                              <span class="hl-comment"># program</span>
+
+<span class="hl-comment"># 第二步：遍历根节点的所有直接子节点</span>
+<span class="hl-keyword">for</span> child <span class="hl-keyword">in</span> _children(root):
+    <span class="hl-comment"># 检查节点类型 —— 不是检查文本内容</span>
+    <span class="hl-keyword">if</span> child.type == <span class="hl-string">"package_declaration"</span>:
+        <span class="hl-comment"># 取 scoped_identifier 子节点，读出 "com.example.demo"</span>
+        pkg_node = _find_child(child, <span class="hl-string">"scoped_identifier"</span>)
+        result[<span class="hl-string">"package"</span>] = _text(pkg_node, source)
+
+    <span class="hl-keyword">elif</span> child.type == <span class="hl-string">"class_declaration"</span>:
+        <span class="hl-comment"># 进入 _parse_class → 递归遍历</span>
+        result[<span class="hl-string">"classes"</span>].append(_parse_class(child, source))</code></pre>
+  </div>
+
+  <div class="code-block">
+    <div class="label"><span class="dot purple"></span> java_symbols.py — _parse_class 解析单一类</div>
+    <pre><code><span class="hl-keyword">def</span> <span class="hl-func">_parse_class</span>(node, source):
+    <span class="hl-comment"># node.type 一定是 class_declaration</span>
+
+    <span class="hl-comment"># child_by_field_name() 通过字段名定位 —— 不是通过搜索文本</span>
+    name_node  = node.child_by_field_name(<span class="hl-string">"name"</span>)        <span class="hl-comment"># → identifier</span>
+    super_node = node.child_by_field_name(<span class="hl-string">"superclass"</span>)   <span class="hl-comment"># → type_identifier (extends)</span>
+    iface_node = node.child_by_field_name(<span class="hl-string">"interfaces"</span>)   <span class="hl-comment"># → type_list (implements)</span>
+    body_node  = node.child_by_field_name(<span class="hl-string">"body"</span>)         <span class="hl-comment"># → class_body (花括号内)</span>
+
+    <span class="hl-comment"># 提取注解：找到 modifiers 子节点，在它的子节点中找 marker_annotation</span>
+    mods = _find_child(node, <span class="hl-string">"modifiers"</span>)
+    <span class="hl-keyword">if</span> mods:
+        <span class="hl-keyword">for</span> m <span class="hl-keyword">in</span> _children(mods):
+            <span class="hl-keyword">if</span> m.type == <span class="hl-string">"marker_annotation"</span>:
+                name = _find_child(m, <span class="hl-string">"identifier"</span>)
+                anns.append({<span class="hl-string">"name"</span>: _text(name, source)})
+
+    <span class="hl-comment"># 遍历 class_body 内部的子节点</span>
+    <span class="hl-keyword">for</span> child <span class="hl-keyword">in</span> _children(body_node):
+        <span class="hl-keyword">if</span> child.type == <span class="hl-string">"method_declaration"</span>:
+            cls[<span class="hl-string">"methods"</span>].append(_parse_method(child, source))
+        <span class="hl-keyword">elif</span> child.type == <span class="hl-string">"field_declaration"</span>:
+            cls[<span class="hl-string">"fields"</span>].append(_parse_field(child, source))</code></pre>
+  </div>
+
+  <h3>1.5.4 对比：grep 和 tree-sitter 在处理同一段代码时的区别</h3>
+  <p>假设 Java 文件里有这段"迷惑性"代码：</p>
+
+  <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.82rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.6;margin:8px 0">
+    <span style="color:#5c6370">// 情况 1：注释里的 @GetMapping  —— 不是注解，是文本</span><br>
+    <span style="color:#5c6370">/* @GetMapping("/old/api") */</span><br>
+    <span style="color:#c678dd">public</span> String oldEndpoint() { ... }<br><br>
+    <span style="color:#5c6370">// 情况 2：字符串字面量里的 @GetMapping  —— 不是注解，是字符串内容</span><br>
+    String log = <span style="color:#98c379">"received @GetMapping request"</span>;<br><br>
+    <span style="color:#5c6370">// 情况 3：错误的注解名 @Getmapping（少写一个 p） —— 在 Java 语法里不合法</span><br>
+    <span style="color:#e06c75">@Getmapping</span> &nbsp;<span style="color:#5c6370">// tree-sitter 解析的时候，这里会报错或者不产生 marker_annotation 节点</span><br>
+    <span style="color:#c678dd">public</span> void typo() {}
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0">
+    <div style="background:var(--surface);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:14px">
+      <h4 style="color:var(--orange);font-size:0.9rem;margin-bottom:6px"><code>grep("@GetMapping")</code></h4>
+      <p style="font-size:0.82rem;color:var(--text-dim);margin:0;line-height:1.6">
+        ✅ 命中真正的 <code>@GetMapping</code>（如果有的话）<br>
+        ❌ 命中注释里的文本（情况 1）<br>
+        ❌ 命中字符串里的文本（情况 2）<br>
+        ❌ <strong style="color:var(--orange)">不会命中情况 3</strong>——因为它搜的是
+        <code>@GetMapping</code>，而拼写是 <code>@Getmapping</code><br>
+        <br>
+        <strong>结果：误报 2 条，漏报 0 条（但如果是反过来的情况就很难说了）</strong>
+      </p>
+    </div>
+    <div style="background:var(--surface);border:1px solid rgba(52,211,153,0.3);border-radius:8px;padding:14px">
+      <h4 style="color:var(--green);font-size:0.9rem;margin-bottom:6px">tree-sitter <code>marker_annotation</code></h4>
+      <p style="font-size:0.82rem;color:var(--text-dim);margin:0;line-height:1.6">
+        ✅ 命中真正的 <code>@GetMapping</code>（如果有的话）<br>
+        ❌ <strong style="color:var(--green)">忽略</strong>注释里的文本——<code>block_comment</code> 节点类型不是 <code>marker_annotation</code><br>
+        ❌ <strong style="color:var(--green)">忽略</strong>字符串里的文本——<code>string_literal</code> 节点类型不是 <code>marker_annotation</code><br>
+        ❌ <strong style="color:var(--green)">忽略</strong>拼写错误——<code>@Getmapping</code> 无法被解析为合法的 <code>marker_annotation</code> 节点<br>
+        <br>
+        <strong>结果：零误报。只命中语法上确认为注解的节点。</strong>
+      </p>
+    </div>
+  </div>
+
+  <p>
+    grep 的匹配条件是 <strong>文本相等</strong>："字符串里是否包含 <code>@GetMapping</code>"。<br>
+    tree-sitter 的匹配条件是 <strong>语法相等</strong>："这个节点的类型是 <code>marker_annotation</code>，
+    且它的 <code>name</code> 子节点的文本是 <code>GetMapping</code>"。<br>
+    这就是"问语法结构"和"搜字符串"的本质区别。
+  </p>
+
+  <h3>1.5.5 为什么 grep 做不到的一些事，tree-sitter 能做到？</h3>
+  <p>举三个实际场景：</p>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin:10px 0">
+    <p style="margin:0;font-size:0.88rem;line-height:1.7">
+      <strong>场景 A："找出所有<code>没有</code>用 @Transactional 注解的 public 方法"</strong><br>
+      grep 能找出 "<code>@Transactional</code>"，但<strong>无法判断</strong>这个注解是属于这个方法、
+      还是属于整个类（类级别的 <code>@Transactional</code> 会作用于所有方法）。
+      tree-sitter 知道：<code>method_declaration → modifiers → marker_annotation[name=Transactional]</code>
+      是方法自己的注解；<code>class_declaration → modifiers → marker_annotation[name=Transactional]</code>
+      是类的注解。逻辑上可以精确区分。<br><br>
+
+      <strong>场景 B："这个类继承了哪些类？实现了哪些接口？"</strong><br>
+      grep 可以搜 <code>extends</code> 和 <code>implements</code>，但如果一个类实现了
+      <code>Serializable</code> 但<strong>通过父类继承</strong>，grep 无法展开继承链。
+      tree-sitter 可以直接访问 <code>class_declaration → superclass</code> 和
+      <code>class_declaration → interfaces</code> 字段，而且可以递归爬父类文件。<br><br>
+
+      <strong>场景 C："这个方法的参数类型和返回类型是什么？"</strong><br>
+      grep 得到的是模糊的文本片段，tree-sitter 通过 <code>method_declaration → type</code>
+      和 <code>method_declaration → parameters → formal_parameter → type</code>
+      精确提取类型信息。
+    </p>
+  </div>
+
+  <h3>1.5.6 两个工具的分工</h3>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px">
+    <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+      <tr>
+        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--accent2)">工具</th>
+        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--accent2)">粒度</th>
+        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--accent2)">做了什么</th>
+        <th style="text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);color:var(--accent2)">类比</th>
+      </tr>
+      <tr>
+        <td style="padding:6px 8px;font-weight:600">java_symbols</td>
+        <td style="padding:6px 8px;color:var(--text-dim)">单文件</td>
+        <td style="padding:6px 8px;color:var(--text-dim)">解析树 → 提取 package / imports / 每个类的 name / kind / annotations / fields / methods / extends / implements → JSON</td>
+        <td style="padding:6px 8px;color:var(--text-dim)">给 LLM 看的"文件结构摘要"</td>
+      </tr>
+      <tr>
+        <td style="padding:6px 8px;font-weight:600">java_index</td>
+        <td style="padding:6px 8px;color:var(--text-dim)">全仓库</td>
+        <td style="padding:6px 8px;color:var(--text-dim)">遍历所有 .java → 每个文件执行 <code>_parse_file</code> → 合并所有符号 → 写入 <code>.code_watch/index.json</code> → 支持按 kind/annotation/name 过滤查询</td>
+        <td style="padding:6px 8px;color:var(--text-dim)">给 LLM 看的"仓库结构数据库"</td>
+      </tr>
+    </table>
+  </div>
+
+  <p style="margin-top:14px">
+    总结：<strong>grep 解决的问题是"这个字符串出现在哪里"；tree-sitter 解决的问题是
+    "这段代码在语法上是什么"。</strong> 后者是理解代码结构的前提，
+    也是后续做 bug 分析（比如"找到所有没有 @Transactional 的 public 方法"）的数据基础。
+  </p>
+
+</section>
+
+<!-- ===== 2 提示词 ===== -->
+<section id="prompt">
+  <h2><span class="section-num">2</span>提示词（Prompts）</h2>
+  <p>系统提示词写在 <code>agent.py</code> 中，动态注入当前 repo 路径，指导模型遵循 opencode 风格的工作流：</p>
+
+  <div class="prompt-box">
+    <div class="prompt-comment"># agent.py — _make_system_prompt() 生成的完整提示词</div>
+    <br>
+    You are a Java code-reading assistant with access to a Java repository.<br>
+    Repository root: <code>{ctx.repo_root}</code><br><br>
+
+    Core principles:<br>
+    1. Explore before reading — use <code>glob</code>, <code>grep</code>, <code>java_index</code> first,<br>
+    &nbsp;&nbsp;&nbsp;then <code>read_file</code> on specific files.<br>
+    2. Use <code>java_symbols</code> for structured Java AST info instead of raw file reads<br>
+    &nbsp;&nbsp;&nbsp;when possible.<br>
+    3. Explain each step before acting.<br>
+    4. Never claim you've read a file unless you actually called <code>read_file</code> or <code>java_symbols</code>.<br>
+    5. Stay inside the repo root. Reject paths that escape it.<br>
+    6. Prefer read-only bash commands (<code>git</code>, <code>rg</code>, <code>find</code>, <code>mvn -q</code>).<br><br>
+
+    Tools available:<br>
+    &nbsp;<code>read_file(path, offset?, limit?)</code>   — read file content<br>
+    &nbsp;<code>glob(pattern, subpath?)</code> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— find files by pattern<br>
+    &nbsp;<code>grep(pattern, include?)</code> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— regex search file contents<br>
+    &nbsp;<code>list_dir(path?)</code> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— list directory entries<br>
+    &nbsp;<code>java_symbols(file)</code> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— extract Java AST<br>
+    &nbsp;<code>java_index(kind?, annotation?, ...)</code> &nbsp;— query symbol index<br>
+    &nbsp;<code>bash(command)</code> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;— run read-only shell commands<br><br>
+
+    Output style:<br>
+    • Concise. Show results directly without paraphrasing.<br>
+    • When reporting findings, cite exact <code>file:line</code>.<br>
+    • If you cannot find something, say so rather than guessing.
+  </div>
+
+  <p>这份提示词在 <code>build_agent()</code> 中通过 <code>ChatPromptTemplate</code> 注入到 <code>create_react_agent</code>：</p>
+
+  <div class="code-block">
+    <div class="label"><span class="dot purple"></span> agent.py — build_agent</div>
+    <pre><code>llm = ChatOpenAI(model=config.model, temperature=<span class="hl-number">0</span>)
+tools = build_tools(ctx)
+prompt = ChatPromptTemplate.from_messages([
+    SystemMessage(content=_make_system_prompt(ctx)),
+    MessagesPlaceholder(variable_name=<span class="hl-string">"messages"</span>),
+])
+agent = create_react_agent(
+    model=llm, tools=tools,
+    state_schema=AgentState,
+    prompt=prompt,
+    checkpointer=MemorySaver(),
+)</code></pre>
+  </div>
+</section>
+
+<!-- ===== 3 Function Call ===== -->
+<section id="tools">
+  <h2><span class="section-num">3</span>Function Call（工具系统）</h2>
+  <p>
+    共 7 个工具，均以 <code>@tool</code> 装饰器定义为 langchain BaseTool。每个工具通过工厂闭包
+    绑定 <code>RepoContext</code>，LLM 在 ReAct 循环中自动选择调用。
+  </p>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:16px 0">
+    <div class="tool-row" style="padding:12px 16px">
+      <div class="tool-icon read">📄</div>
+      <div class="tool-body">
+        <h4>read_file</h4>
+        <p>读取文件内容，支持 offset/limit 分段。超 <code>max_read_bytes</code> 时报错，防止炸掉 token 窗口。</p>
+        <span class="sig">read_file(path, offset=0, limit=2000)</span>
+      </div>
+    </div>
+    <div class="tool-row" style="padding:12px 16px;border-top:1px solid rgba(42,45,58,0.3)">
+      <div class="tool-icon search">🔍</div>
+      <div class="tool-body">
+        <h4>glob</h4>
+        <p>按 pattern 查找文件，如 <code>**/*Controller.java</code>。可指定 subpath 限定范围。</p>
+        <span class="sig">glob(pattern, subpath="")</span>
+      </div>
+    </div>
+    <div class="tool-row" style="padding:12px 16px;border-top:1px solid rgba(42,45,58,0.3)">
+      <div class="tool-icon search">🔎</div>
+      <div class="tool-body">
+        <h4>grep</h4>
+        <p>正则搜索文件内容。优先使用 ripgrep，fallback 到纯 Python 实现。默认只搜索 <code>*.java</code>。</p>
+        <span class="sig">grep(pattern, include="*.java")</span>
+      </div>
+    </div>
+    <div class="tool-row" style="padding:12px 16px;border-top:1px solid rgba(42,45,58,0.3)">
+      <div class="tool-icon dir">📁</div>
+      <div class="tool-body">
+        <h4>list_dir</h4>
+        <p>列出目录内容，返回相对路径，目录末尾加 <code>/</code>。自动截断到 500 条。</p>
+        <span class="sig">list_dir(path="")</span>
+      </div>
+    </div>
+    <div class="tool-row" style="padding:12px 16px;border-top:1px solid rgba(42,45,58,0.3)">
+      <div class="tool-icon java">☕</div>
+      <div class="tool-body">
+        <h4>java_symbols（单文件 AST 解析）</h4>
+        <p><strong>为什么需要它？</strong> 如果 LLM 只用 <code>read_file</code> 看 Java 源码，它读到的是
+          <span style="color:var(--text-dim)">纯文本</span>——必须自己"脑内编译"才能理解哪个类是哪个、注解在哪、
+          方法签名怎么拆。有了 <code>java_symbols</code>，直接把源码变成
+          <span style="color:var(--green)">结构化 JSON</span>， LLM 一步拿到精确信息。
+        </p>
+        <span class="sig">java_symbols(file)</span>
+      </div>
+    </div>
+    <div class="tool-row" style="padding:12px 16px 16px;border-top:1px solid rgba(42,45,58,0.3)">
+      <div style="flex:1;min-width:0">
+        <p style="font-size:0.83rem;color:var(--text-dim);margin:0 0 8px">
+          <strong style="color:var(--orange)">无 AST</strong> — <code>read_file("UserController.java")</code> 返回纯文本：</p>
+        <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.78rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.5;color:var(--text-dim)">
+          <span style="color:#5c6370">// 38 行文本，LLM 自己提取"这个类叫 UserController"</span><br>
+          <span style="color:#5c6370">// 它有两个注解 @RestController 和 @RequestMapping</span><br>
+          <span style="color:#5c6370">// 有 4 个方法，每个有各自的注解...</span><br>
+          <span style="color:#98c379">@RestController</span><br>
+          <span style="color:#98c379">@RequestMapping</span><span style="color:#e5c07b">(</span><span style="color:#98c379">"/api/users"</span><span style="color:#e5c07b">)</span><br>
+          <span style="color:#c678dd">public class</span> <span style="color:#e5c07b">UserController</span> {<br>
+          <span style="color:#abb2bf">  ...</span>
+        </div>
+        <p style="font-size:0.83rem;color:var(--text-dim);margin:10px 0 0">
+          <strong style="color:var(--green)">有 AST</strong> — <code>java_symbols("UserController.java")</code> 返回 JSON：</p>
+        <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.78rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.4;overflow-x:auto">
+{<br>
+  <span style="color:#e06c75">"package"</span>: <span style="color:#98c379">"com.example.demo"</span>,<br>
+  <span style="color:#e06c75">"imports"</span>: [<span style="color:#98c379">"java.util.List"</span>, <span style="color:#98c379">"org.springframework.web.bind.annotation"</span>],<br>
+  <span style="color:#e06c75">"classes"</span>: [{<br>
+    <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"UserController"</span>,<br>
+    <span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>,<br>
+    <span style="color:#e06c75">"annotations"</span>: [<br>
+      &nbsp;&nbsp;{<span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"RestController"</span>},<br>
+      &nbsp;&nbsp;{<span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"RequestMapping"</span>, <span style="color:#e06c75">"args"</span>: <span style="color:#98c379">"(\"/api/users\")"</span>}<br>
+    ],<br>
+    <span style="color:#e06c75">"methods"</span>: [<br>
+      &nbsp;&nbsp;{<span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"getAllUsers"</span>, <span style="color:#e06c75">"return_type"</span>: <span style="color:#98c379">"List&lt;User&gt;"</span>,<br>
+      &nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"annotations"</span>: [{<span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"GetMapping"</span>}],<br>
+      &nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"parameters"</span>: [], <span style="color:#e06c75">"start_line"</span>: <span style="color:#d19a66">19</span>},<br>
+      &nbsp;&nbsp;{<span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"getUserById"</span>, <span style="color:#e06c75">"return_type"</span>: <span style="color:#98c379">"User"</span>,<br>
+      &nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"annotations"</span>: [{<span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"GetMapping"</span>, <span style="color:#e06c75">"args"</span>: <span style="color:#98c379">"(\"/{id}\")"</span>}],<br>
+      &nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"parameters"</span>: [{<span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"id"</span>, <span style="color:#e06c75">"type"</span>: <span style="color:#98c379">"Long"</span>}]}<br>
+    ]<br>
+  }]<br>
+}
+        </div>
+        <p style="font-size:0.83rem;color:var(--text-dim);margin:6px 0 0">
+          LLM 一眼就知道："这是一个 <code>@RestController</code>，有 2 个 <code>@GetMapping</code> 端点，
+          一个接受 <code>Long id</code> 路径参数"。不需要自己解析花括号和注解位置。
+        </p>
+      </div>
+    </div>
+    <div class="tool-row" style="padding:12px 16px;border-top:1px solid rgba(42,45,58,0.3)">
+      <div class="tool-icon java">🗂️</div>
+      <div class="tool-body">
+        <h4>java_index（全仓库符号索引）</h4>
+        <p><strong>为什么需要它？</strong> <code>java_symbols</code> 只能查一个文件。
+          <code>java_index</code> 预先解析 <strong>整个仓库</strong>的所有 <code>*.java</code>，
+          构建一个可搜索的索引。这样 LLM 问"仓库里有哪些 <code>@RestController</code>"时，
+          不需要逐个文件 grep + 手动理解——直接过滤索引即可。
+          甚至 LLM 都不知道具体有哪些注解，也能问。这就是后续做 bug 分析的数据基础。
+        </p>
+        <span class="sig">java_index(kind?, annotation?, name_contains?, file_contains?)</span>
+      </div>
+    </div>
+    <div class="tool-row" style="padding:0 16px 16px;border-top:none">
+      <div style="flex:1;min-width:0">
+        <p style="font-size:0.83rem;color:var(--text-dim);margin:8px 0">
+          <strong style="color:var(--orange)">无索引</strong> — LLM 需要自己连招：<code>glob("**/*.java")</code> → 
+          对每个文件 <code>read_file</code> → 在脑子里扫描 → 找到全是纯文本。
+          对一个 100 文件的仓库，这需要几十步。而且可能漏掉。<br>
+          <strong style="color:var(--green)">有索引</strong> — 一步调用：</p>
+        <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.78rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.4">
+<span style="color:#abb2bf">>> </span>java_index(annotation=<span style="color:#98c379">"RestController"</span>)<br>
+{<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"stats"</span>: {<span style="color:#e06c75">"total"</span>: <span style="color:#d19a66">39</span>, <span style="color:#e06c75">"matched"</span>: <span style="color:#d19a66">1</span>},<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"entries"</span>: [{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"UserController"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"file"</span>: <span style="color:#98c379">"src/main/java/com/example/demo/UserController.java"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"RestController"</span>, <span style="color:#98c379">"RequestMapping"</span>],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"methods"</span>: [<span style="color:#98c379">"getAllUsers"</span>, <span style="color:#98c379">"getUserById"</span>, <span style="color:#98c379">"createUser"</span>, <span style="color:#98c379">"deleteUser"</span>]<br>
+&nbsp;&nbsp;}]<br>
+}
+        </div>
+        <p style="font-size:0.83rem;color:var(--text-dim);margin:6px 0 0">
+          <code>total: 39</code> 表示整个仓库索引了 39 个符号（类+接口+导入+方法）。
+          进一步过滤 <code>kind="method"</code> 可以只看方法。
+          这相当于给你的 Java 仓库建了一个"数据库表"。
+        </p>
+      </div>
+    </div>
+    <div class="tool-row" style="padding:12px 16px;border-top:1px solid rgba(42,45,58,0.3)">
+      <div class="tool-icon bash">💻</div>
+      <div class="tool-body">
+        <h4>bash</h4>
+        <p>只读 shell 白名单：<code>git log/diff/status</code>、<code>rg</code>、<code>find</code>、
+          <code>mvn help/dependency</code>、<code>ls</code>、<code>pwd</code>。
+          拒绝任何写入操作和未授权的子命令。</p>
+        <span class="sig">bash(command)</span>
+      </div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:28px">java_index 使用样例</h3>
+  <p>以下所有示例基于 <code>fixtures/sample-java</code>（4 个文件、39 个符号）。每个例子展示实际调用和返回结果：</p>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin:12px 0">
+    <h4 style="font-size:0.93rem;margin-bottom:6px">样例 1：查看全部符号（无过滤）</h4>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin:2px 0 8px">
+      不传任何参数时，返回统计信息和前 100 条符号。用于快速了解仓库概况。
+    </p>
+    <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.78rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.4">
+>> java_index()<br>
+{<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"stats"</span>: {<span style="color:#e06c75">"total"</span>: <span style="color:#d19a66">39</span>, <span style="color:#e06c75">"matched"</span>: <span style="color:#d19a66">39</span>},<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"entries"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"import"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"java.time.LocalDateTime"</span>, <span style="color:#e06c75">"file"</span>: <span style="color:#98c379">"User.java"</span>},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"User"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"Entity"</span>, <span style="color:#98c379">"Table"</span>]},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"method"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"getId"</span>, <span style="color:#e06c75">"container_class"</span>: <span style="color:#98c379">"User"</span>},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;... <span style="color:#5c6370">// 共 39 条</span><br>
+&nbsp;&nbsp;]<br>
+}
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin:12px 0">
+    <h4 style="font-size:0.93rem;margin-bottom:6px">样例 2：只看 class（<code>kind="class"</code>）</h4>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin:2px 0 8px">
+      过滤出所有类、接口、枚举。不显示导入和方法。
+    </p>
+    <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.78rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.4">
+>> java_index(kind=<span style="color:#98c379">"class"</span>)<br>
+{<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"stats"</span>: {<span style="color:#e06c75">"total"</span>: <span style="color:#d19a66">39</span>, <span style="color:#e06c75">"matched"</span>: <span style="color:#d19a66">3</span>},<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"entries"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"User"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"Entity"</span>, <span style="color:#98c379">"Table"</span>]},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"UserController"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"RestController"</span>, <span style="color:#98c379">"RequestMapping"</span>]},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"UserService"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"Service"</span>]}<br>
+&nbsp;&nbsp;]<br>
+}
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin:12px 0">
+    <h4 style="font-size:0.93rem;margin-bottom:6px">样例 3：按注解过滤（<code>annotation="GetMapping"</code>）</h4>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin:2px 0 8px">
+      找出所有使用了 <code>@GetMapping</code> 的符号（包含类和方法）。
+    </p>
+    <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.78rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.4">
+>> java_index(annotation=<span style="color:#98c379">"GetMapping"</span>)<br>
+{<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"stats"</span>: {<span style="color:#e06c75">"total"</span>: <span style="color:#d19a66">39</span>, <span style="color:#e06c75">"matched"</span>: <span style="color:#d19a66">2</span>},<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"entries"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"method"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"getAllUsers"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"container_class"</span>: <span style="color:#98c379">"UserController"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"GetMapping"</span>]},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"method"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"getUserById"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"container_class"</span>: <span style="color:#98c379">"UserController"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"GetMapping"</span>]}<br>
+&nbsp;&nbsp;]<br>
+}
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin:12px 0">
+    <h4 style="font-size:0.93rem;margin-bottom:6px">样例 4：组合过滤（<code>kind="method"</code> + <code>annotation="GetMapping"</code>）</h4>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin:2px 0 8px">
+      只看<strong>方法级别</strong>的 <code>@GetMapping</code>——排除类上同名注解的干扰。
+    </p>
+    <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.78rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.4">
+>> java_index(kind=<span style="color:#98c379">"method"</span>, annotation=<span style="color:#98c379">"GetMapping"</span>)<br>
+{<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"stats"</span>: {<span style="color:#e06c75">"total"</span>: <span style="color:#d19a66">39</span>, <span style="color:#e06c75">"matched"</span>: <span style="color:#d19a66">2</span>},<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"entries"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"method"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"getAllUsers"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"container_class"</span>: <span style="color:#98c379">"UserController"</span>, <span style="color:#e06c75">"file"</span>: <span style="color:#98c379">"UserController.java"</span>, <span style="color:#e06c75">"package"</span>: <span style="color:#98c379">"com.example.demo"</span>},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"method"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"getUserById"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#e06c75">"container_class"</span>: <span style="color:#98c379">"UserController"</span>, <span style="color:#e06c75">"file"</span>: <span style="color:#98c379">"UserController.java"</span>, <span style="color:#e06c75">"package"</span>: <span style="color:#98c379">"com.example.demo"</span>}<br>
+&nbsp;&nbsp;]<br>
+}
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin:12px 0">
+    <h4 style="font-size:0.93rem;margin-bottom:6px">样例 5：名字模糊搜索（<code>name_contains="User"</code>）</h4>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin:2px 0 8px">
+      查询名称中包含 <code>User</code> 的所有符号——类名、方法名、字段名都匹配。
+    </p>
+    <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.78rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.4">
+>> java_index(name_contains=<span style="color:#98c379">"User"</span>)<br>
+{<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"stats"</span>: {<span style="color:#e06c75">"total"</span>: <span style="color:#d19a66">39</span>, <span style="color:#e06c75">"matched"</span>: <span style="color:#d19a66">11</span>},<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"entries"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"User"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"Entity"</span>, <span style="color:#98c379">"Table"</span>]},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"method"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"getUsername"</span>, <span style="color:#e06c75">"container_class"</span>: <span style="color:#98c379">"User"</span>},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"UserController"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"RestController"</span>, ..]},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"UserService"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"Service"</span>]},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"method"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"getAllUsers"</span>, <span style="color:#e06c75">"container_class"</span>: <span style="color:#98c379">"UserController"</span>},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;... <span style="color:#5c6370">// 共 11 条</span><br>
+&nbsp;&nbsp;]<br>
+}
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin:12px 0">
+    <h4 style="font-size:0.93rem;margin-bottom:6px">样例 6：组合过滤（<code>kind="class"</code> + <code>name_contains="User"</code>）</h4>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin:2px 0 8px">
+      只看类级别的 User 相关符号——去掉方法，更聚焦架构。
+    </p>
+    <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:0.78rem;font-family:SFMono-Regular,Consolas,monospace;line-height:1.4">
+>> java_index(kind=<span style="color:#98c379">"class"</span>, name_contains=<span style="color:#98c379">"User"</span>)<br>
+{<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"stats"</span>: {<span style="color:#e06c75">"total"</span>: <span style="color:#d19a66">39</span>, <span style="color:#e06c75">"matched"</span>: <span style="color:#d19a66">3</span>},<br>
+&nbsp;&nbsp;<span style="color:#e06c75">"entries"</span>: [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"User</span><span style="color:#98c379">"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"Entity"</span>, <span style="color:#98c379">"Table"</span>], <span style="color:#e06c75">"methods"</span>: [<span style="color:#98c379">"getId"</span>, <span style="color:#98c379">"setId"</span>, ...]},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"UserController"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"RestController"</span>, <span style="color:#98c379">"RequestMapping"</span>]},<br>
+&nbsp;&nbsp;&nbsp;&nbsp;{<span style="color:#e06c75">"kind"</span>: <span style="color:#98c379">"class"</span>, <span style="color:#e06c75">"name"</span>: <span style="color:#98c379">"UserService"</span>, <span style="color:#e06c75">"annotations"</span>: [<span style="color:#98c379">"Service"</span>]}<br>
+&nbsp;&nbsp;]<br>
+}
+    </div>
+    <p style="font-size:0.82rem;color:var(--text-dim);margin:8px 0 0">
+      <strong>使用模式</strong>：LLM 在 ReAct 循环中会先调用 <code>java_index()</code> 获取仓库概况，
+      然后根据需要用不同参数组合深入查询。这一步相当于"查数据库表"——
+      相比 <code>glob + grep + read_file</code> 的多步操作，一步到位。
+    </p>
+  </div>
+
+</section>
+
+<!-- ===== 4 额外处理 ===== -->
+<section id="extra">
+  <h2><span class="section-num">4</span>额外处理</h2>
+  <p>在实现过程中遇到了几个坑，以下是解决方法和关键的技术决策：</p>
+
+  <ul class="extra-list">
+    <li>
+      <strong>🧩 tree-sitter-java API 适配</strong>
+      <p>
+        安装的 <code>tree-sitter</code> 是 0.26 版本，API 与 0.20 完全不同。<br>
+        <strong>问题</strong>：<code>Language(tree_sitter_java.language(), "java")</code>
+        报错；<code>node.child_by_field_name("modifiers")</code> 返回 <code>None</code>
+        —— 因为 tree-sitter-java 语法中 <code>modifiers</code> <em>不是</em> named field，
+        而是匿名子节点。<br>
+        <strong>解决</strong>：改用迭代子节点 + type 匹配：
+        <code>Language(lib)</code> 单参数构造；
+        <code>_find_child(node, "modifiers")</code> 遍历 children 查找。最终写了
+        <span class="code-inline">_find_child</span> /
+        <span class="code-inline">_find_children</span> 辅助函数，适配了
+        <code>package_declaration</code>、<code>import_declaration</code>、
+        <code>class_declaration</code>、<code>method_declaration</code> 等所有节点类型。
+      </p>
+    </li>
+    <li>
+      <strong>📦 方法签名的「{」陷阱</strong>
+      <p>
+        提取方法签名时，原始方案用 <code>source.find(b"{")</code>，
+        但 Spring 注解 <code>@GetMapping("/{id}")</code> 中含有花括号，导致签名被过早截断——
+        变成 <code>@GetMapping("/</code>。<br>
+        <strong>解决</strong>：利用 tree-sitter 的 <code>body</code> field（<code>block</code> 节点）的
+        <code>start_byte</code> 作为分割点：<code>source[node.start_byte:body.start_byte]</code>，
+        精确得到完整签名。
+      </p>
+      <div class="code-block" style="margin: 8px 0 0">
+        <div class="label"><span class="dot orange"></span> java_symbols.py — _make_signature</div>
+        <pre><code>body = _find_child(node, <span class="hl-string">"block"</span>, <span class="hl-string">"class_body"</span>)
+<span class="hl-keyword">if</span> body:
+    <span class="hl-keyword">return</span> source[node.start_byte:body.start_byte] \
+                .decode().strip()</code></pre>
+      </div>
+    </li>
+    <li>
+      <strong>🗃️ Java 索引缓存失效</strong>
+      <p>
+        首次构建索引后，再次调用仍然返回旧数据（因为 <code>_load_or_build</code> 只要
+        <code>index.json</code> 存在就直接加载）。<br>
+        <strong>解决</strong>：在缓存的 <code>meta</code> 中记录所有 <code>*.java</code>
+        文件的 mtime 字典 <span class="code-inline">file_mtimes</span>。下次加载时比较
+        <code>_get_java_mtimes()</code> 是否一致，不一致则自动重建。
+      </p>
+      <div class="code-block" style="margin: 8px 0 0">
+        <div class="label"><span class="dot orange"></span> java_index.py — 缓存校验</div>
+        <pre><code>cached_mtimes = data.get(<span class="hl-string">"meta"</span>, {}).get(<span class="hl-string">"file_mtimes"</span>, {})
+current_mtimes = _get_java_mtimes(repo_root)
+<span class="hl-keyword">if</span> cached_mtimes == current_mtimes:
+    <span class="hl-keyword">return</span> data.get(<span class="hl-string">"entries"</span>, [])
+<span class="hl-comment"># 否则自动重建</span></code></pre>
+      </div>
+    </li>
+    <li>
+      <strong>🔒 bash 安全白名单</strong>
+      <p>
+        开放 <code>bash</code> 工具必须防止恶意 / 误操作。定义了一个
+        <span class="code-inline">_ALLOWED_COMMANDS</span> 字典，每个命令对应一个子命令集合：
+        <code>None</code> 表示所有子命令放行，<code>set()</code> 表示仅允许裸命令。
+        <code>is_safe_command()</code> 在所有 bash 调用前执行检查。
+      </p>
+      <div class="code-block" style="margin: 8px 0 0">
+        <div class="label"><span class="dot orange"></span> bash_tool.py — 白名单结构</div>
+        <pre><code>_ALLOWED_COMMANDS = {
+    <span class="hl-string">"git"</span>: {<span class="hl-string">"log"</span>, <span class="hl-string">"diff"</span>, <span class="hl-string">"show"</span>, <span class="hl-string">"status"</span>,
+             <span class="hl-string">"branch"</span>, <span class="hl-string">"rev-parse"</span>, <span class="hl-string">"ls-files"</span>, <span class="hl-string">"grep"</span>},
+    <span class="hl-string">"rg"</span>:   <span class="hl-builtin">None</span>,      <span class="hl-comment"># 全部放行</span>
+    <span class="hl-string">"find"</span>: <span class="hl-builtin">None</span>,
+    <span class="hl-string">"mvn"</span>:  {<span class="hl-string">"help"</span>, <span class="hl-string">"dependency"</span>, <span class="hl-string">"validate"</span>},
+    <span class="hl-string">"ls"</span>:   <span class="hl-builtin">set</span>(),    <span class="hl-comment"># 仅允许裸 ls（不限制 flags）</span>
+    <span class="hl-string">"pwd"</span>:  <span class="hl-builtin">set</span>(),
+}</code></pre>
+      </div>
+    </li>
+    <li>
+      <strong>📐 semantic truncation + 环境隔离</strong>
+      <p>
+        <code>read_file</code> 在截断处明确提示 <span class="code-inline">--- truncated at line X of Y; use offset=X to continue ---</span>，
+        让 LLM 能用 offset 继续读取——这一设计直接取自 opencode 的 Read 工具。
+        另外，系统 Python 环境存在 anaconda3 / system py3.10 混合问题导致导入失败，
+        通过 <code>uv venv</code> 创建独立虚拟环境彻底解决。
+      </p>
+    </li>
+  </ul>
+
+  <h3 style="margin-top:24px">整体 Agent 调用流程</h3>
+  <div class="flow-diagram">
+    <span class="node">User<br><small>question</small></span>
+    <span class="arrow">→</span>
+    <span class="node blue">LLM<br><small>决定下一步</small></span>
+    <span class="arrow">↕</span>
+    <span class="node green">Tools<br><small>选一个调用</small></span>
+    <span class="arrow">→</span>
+    Java Repo<br>
+    <span class="arrow">↓</span><br>
+    <span class="node blue">LLM<br><small>分析结果</small></span>
+    <span class="arrow">→</span>
+    <span class="node green">Tools</span>
+    <span class="arrow">↔</span>
+    <span class="node">... 直到<br>回答完成</span>
+    <br>
+    <span style="font-size:0.75rem; color:var(--text-dim); display:block;margin-top:8px">
+      「思考 → 调用 → 观察 → 思考」ReAct 循环 · langgraph 自动编排
+    </span>
+  </div>
+</section>
+
+</div>
+
+<div class="footer">
+  基于 <a href="https://langchain.com">langchain</a> +
+  <a href="https://smith.langchain.com">langsmith</a> 构建 ·
+  参考 <a href="https://opencode.ai">opencode</a> 设计 · 2026
+</div>
+
+</body>
+</html>

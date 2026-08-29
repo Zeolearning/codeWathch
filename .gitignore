@@ -1,0 +1,29 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets — never commit
+.env
+
+# Local Defects4J clone (2GB vendored, not part of this repo)
+/defects4j/
+
+# Local Vul4J clone (dataset + CLI, GPL-3.0, not part of this repo)
+/vul4j/
+
+# code-watch index cache
+.code_watch/
+
+# Checked-out Defects4J bug copies
+tmp/
+
+# Test artifacts
+.pytest_cache/
+output/

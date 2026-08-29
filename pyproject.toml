@@ -1,0 +1,45 @@
+[project]
+name = "code-watch"
+version = "0.1.0"
+description = "Java code-reading agent built with langchain + langsmith"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain>=1.3",
+    "langchain-core>=1.3",
+    "langchain-openai>=1.2",
+    "langgraph>=1.1",
+    "langsmith>=0.8",
+    "tree-sitter>=0.20",
+    "tree-sitter-java>=0.23",
+    "tiktoken>=0.12",
+    "python-dotenv>=1.0",
+    "typer>=0.12",
+    "rich>=13.0",
+    "langgraph-prebuilt>=1.0",
+    "ruamel-yaml>=0.19.1",
+    "tqdm>=4.69.0",
+    "networkx>=3.4.2",
+    "semgrep>=1.172.0",
+]
+
+[project.scripts]
+code-watch = "code_watch.cli:app"
+
+[tool.uv]
+extra-index-url = []
+package = true
+
+[tool.uv.sources]
+code-watch = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: integration test that does a real vul4j checkout (network + git)",
+]
+testpaths = ["tests"]
