@@ -154,6 +154,20 @@ def _vul4j_checkout(case_id: str, workdir: Path) -> None:
         )
 
 
+def _strip_vul4j_copies(tree: Path) -> None:
+    """Remove the raw VUL4J/vulnerable + VUL4J/human_patch copy dirs the CLI
+    leaves inside a checkout.
+
+    The copies are untracked (they never appear in ``git diff HEAD master``),
+    but the vulnerable copy inside the fix tree is a false-FP source for the
+    differential oracle — a rule matching the bug would legitimately hit it.
+    Idempotent, so pre-fix cached checkouts get cleaned on next use too.
+    """
+    copies = tree / "VUL4J"
+    if copies.is_dir():
+        shutil.rmtree(copies, ignore_errors=True)
+
+
 def checkout_pair(
     case_id: str,
     *,
@@ -169,7 +183,9 @@ def checkout_pair(
 
     The vul4j checkout leaves a 2-commit repo: detached HEAD = "vulnerable",
     master = "human_patch". The fix tree is a copy of that repo checked out on
-    master, so both trees share one parent dir for path-jailed agents.
+    master, so both trees share one parent dir for path-jailed agents. The raw
+    VUL4J/ copy dirs the CLI leaves inside each tree are stripped (see
+    _strip_vul4j_copies) so scans never see duplicated vulnerable sources.
 
     With ``pair=False`` only the vulnerable tree is materialized (rule-scanning
     holdout does not need the fixed tree); the returned fix path may not exist.
@@ -193,6 +209,7 @@ def checkout_pair(
         if vul_dir.exists():
             shutil.rmtree(vul_dir)
         _vul4j_checkout(case_id, vul_dir)
+    _strip_vul4j_copies(vul_dir)
 
     if pair and (refresh or not (fix_dir / ".git").is_dir()):
         if fix_dir.exists():
@@ -201,6 +218,8 @@ def checkout_pair(
         proc = _run(["git", "-C", str(fix_dir), "checkout", "master"])
         if proc.returncode != 0:
             raise RuntimeError(f"git checkout master failed in {fix_dir}: {proc.stderr[-500:]}")
+    if pair:
+        _strip_vul4j_copies(fix_dir)
 
     return parent, vul_dir, fix_dir
 

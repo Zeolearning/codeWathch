@@ -123,6 +123,23 @@ class TestResolveCaseIds:
             resolve_case_ids(",", cases)
 
 
+class TestStripCopies:
+    def test_cached_tree_gets_stripped_without_cli(self, tmp_path):
+        """缓存命中路径同样剔除 VUL4J/ 副本（幂等清洁旧缓存），不触发 CLI。"""
+        parent = tmp_path / "VUL4J-99"
+        vul = parent / "vul"
+        (vul / "VUL4J" / "vulnerable" / "src").mkdir(parents=True)
+        (vul / ".git").mkdir()  # fake cache marker: skips the real checkout
+        (vul / "VUL4J" / "vulnerable" / "src" / "A.java").write_text(
+            "class A {}\n", encoding="utf-8"
+        )
+
+        _, vul_dir, _ = checkout_pair("VUL4J-99", base_dir=str(parent), pair=False)
+
+        assert not (vul_dir / "VUL4J").exists()
+        assert (vul_dir / ".git").is_dir()  # cache marker untouched
+
+
 @pytest.mark.slow
 class TestCheckoutPair:
     """Integration: real `vul4j checkout` (network + upstream clone, ~seconds once warm)."""
@@ -140,6 +157,11 @@ class TestCheckoutPair:
 
         assert head(vul_dir) == "HEAD"          # detached = vulnerable
         assert head(fix_dir) == "master"        # human_patch
+
+        # the raw VUL4J/vulnerable + VUL4J/human_patch copy dirs the CLI
+        # leaves behind must be stripped from both trees (false-FP source)
+        assert not (vul_dir / "VUL4J").exists()
+        assert not (fix_dir / "VUL4J").exists()
 
         patch = compute_patch(vul_dir)
         assert "DiskFileItem.java" in patch
