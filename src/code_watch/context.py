@@ -30,7 +30,10 @@ class RepoContext:
     def resolve_path(self, *parts: str) -> Path:
         raw = Path(*parts)
         if raw.is_absolute():
-            return raw
+            # resolve() normalizes ".." segments; without it an absolute path
+            # like /root/vul/../../etc/passwd passes the lexical relative_to
+            # check in ensure_inside while reading outside the root on disk.
+            return raw.resolve()
         return (self.repo_root / raw).resolve()
 
     def ensure_inside(self, resolved: Path) -> Path:

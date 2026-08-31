@@ -288,7 +288,7 @@ def evaluate_holdout(
             base_dir = str(Path(work_root) / f"holdout-{case_id}")
         try:
             # Only the vulnerable tree is needed for scanning.
-            _, vul_dir, _ = checkout_pair(case_id, base_dir=base_dir, pair=False)
+            parent, vul_dir, _ = checkout_pair(case_id, base_dir=base_dir, pair=False)
             expected = expected_from_patch(compute_patch(vul_dir))
 
             vul_hits = scan_tree(merged, vul_dir)
@@ -331,8 +331,11 @@ def evaluate_holdout(
                     flush=True,
                 )
         finally:
-            if not keep_work and base_dir:
-                shutil.rmtree(base_dir, ignore_errors=True)
+            # Clean the actual checkout parent: with work_root set it equals
+            # base_dir, without it checkout_pair created a tempfile.mkdtemp dir
+            # that would otherwise leak a full repo clone per test case.
+            if not keep_work:
+                shutil.rmtree(parent, ignore_errors=True)
 
     return HoldoutReport(
         train_bug_ids=list(train_case_ids),

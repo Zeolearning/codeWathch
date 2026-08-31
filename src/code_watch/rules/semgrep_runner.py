@@ -52,7 +52,10 @@ def scan_tree(rule_yaml: str, target_dir: Path) -> list[dict[str, Any]]:
     Each hit: {check_id, path, start_line, end_line, message}. Paths are relative
     to target_dir when possible (else absolute) so they line up with affected_files.
     """
-    target_dir = Path(target_dir)
+    # Resolve to an absolute path: the subprocess below cds into target_dir
+    # (cwd=), so a relative target argument would be resolved by the child
+    # against its NEW cwd and point at a nonexistent doubled path.
+    target_dir = Path(target_dir).resolve()
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".yaml", delete=False, encoding="utf-8"
     ) as f:
@@ -73,8 +76,11 @@ def scan_tree(rule_yaml: str, target_dir: Path) -> list[dict[str, Any]]:
     # error. Surface it instead of silently reporting zero hits (which would be
     # miscounted as FN downstream).
     if result.returncode != 0:
+        # semgrep reports config errors (e.g. an invalid scanning root) in the
+        # stdout JSON, not stderr — include both.
+        detail = (result.stderr.strip() or result.stdout.strip())[:500]
         raise RuntimeError(
-            f"semgrep scan exited {result.returncode}: {result.stderr.strip()[:500]}"
+            f"semgrep scan exited {result.returncode}: {detail}"
         )
 
     try:
