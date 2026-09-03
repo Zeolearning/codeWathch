@@ -6,8 +6,10 @@ from pathlib import Path
 
 import pytest
 
+import code_watch.dataset.vul4j as vul4j_mod
 from code_watch.dataset.vul4j import (
     DATASET_CSV,
+    _tree_ok,
     checkout_pair,
     compute_patch,
     expected_from_patch,
@@ -15,6 +17,16 @@ from code_watch.dataset.vul4j import (
     load_cases,
     resolve_case_ids,
 )
+
+
+def _make_valid_fake_repo(tree: Path) -> None:
+    """A minimal git repo that passes the _tree_ok health check (has a HEAD)."""
+    subprocess.run(["git", "init", "-q", str(tree)], check=True, capture_output=True)
+    subprocess.run(
+        ["git", "-C", str(tree), "-c", "user.email=t@t", "-c", "user.name=t",
+         "commit", "--allow-empty", "-q", "-m", "init"],
+        check=True, capture_output=True,
+    )
 
 
 class TestLoadCases:
@@ -128,8 +140,8 @@ class TestStripCopies:
         """缓存命中路径同样剔除 VUL4J/ 副本（幂等清洁旧缓存），不触发 CLI。"""
         parent = tmp_path / "VUL4J-99"
         vul = parent / "vul"
+        _make_valid_fake_repo(vul)
         (vul / "VUL4J" / "vulnerable" / "src").mkdir(parents=True)
-        (vul / ".git").mkdir()  # fake cache marker: skips the real checkout
         (vul / "VUL4J" / "vulnerable" / "src" / "A.java").write_text(
             "class A {}\n", encoding="utf-8"
         )
@@ -138,6 +150,31 @@ class TestStripCopies:
 
         assert not (vul_dir / "VUL4J").exists()
         assert (vul_dir / ".git").is_dir()  # cache marker untouched
+        assert (parent / ".lock").is_file()  # per-case lock file created
+
+
+class TestCorruptCache:
+    def test_broken_git_triggers_recheckout(self, tmp_path, monkeypatch):
+        """rev-parse 失败的缓存必须重建，健康缓存则不再触发 CLI。"""
+        calls: list[str] = []
+
+        def fake_checkout(case_id: str, workdir: Path) -> None:
+            calls.append(case_id)
+            _make_valid_fake_repo(workdir)
+
+        monkeypatch.setattr(vul4j_mod, "_vul4j_checkout", fake_checkout)
+
+        parent = tmp_path / "VUL4J-98"
+        vul = parent / "vul"
+        (vul / ".git").mkdir(parents=True)  # broken cache: .git exists but no HEAD
+
+        assert not _tree_ok(vul)
+        _, vul_dir, _ = checkout_pair("VUL4J-98", base_dir=str(parent), pair=False)
+        assert calls == ["VUL4J-98"]          # rebuilt once
+        assert _tree_ok(vul_dir)
+
+        checkout_pair("VUL4J-98", base_dir=str(parent), pair=False)
+        assert calls == ["VUL4J-98"]          # healthy cache: no re-checkout
 
 
 @pytest.mark.slow

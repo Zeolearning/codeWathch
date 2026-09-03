@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import csv
+import fcntl
 import os
 import re
 import shutil
 import subprocess
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 from code_watch.dataset.schema import CaseInfo
@@ -168,6 +170,37 @@ def _strip_vul4j_copies(tree: Path) -> None:
         shutil.rmtree(copies, ignore_errors=True)
 
 
+@contextmanager
+def _case_lock(parent: Path):
+    """Serialize checkout materialization per case parent dir (flock).
+
+    Two batch processes resuming the same split can otherwise interleave:
+    one rmtree+re-checkouts vul/ while the other is mid copytree(vul -> fix),
+    which surfaces as spurious ``.git/objects/xx`` ENOENT errors.
+    """
+    parent.mkdir(parents=True, exist_ok=True)
+    lock_path = parent / ".lock"
+    with open(lock_path, "w") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+
+
+def _tree_ok(tree: Path) -> bool:
+    """A cached tree is usable only if its git metadata resolves a HEAD.
+
+    Catches half-written / corrupted caches (e.g. a tree left behind when a
+    previous run was killed mid-checkout) so they get rebuilt instead of
+    poisoning downstream copytree/scan steps.
+    """
+    if not (tree / ".git").is_dir():
+        return False
+    proc = _run(["git", "-C", str(tree), "rev-parse", "--verify", "HEAD"])
+    return proc.returncode == 0
+
+
 def checkout_pair(
     case_id: str,
     *,
@@ -179,7 +212,7 @@ def checkout_pair(
 
     Layout:
         <parent>/vul/   vulnerable tree (vul4j checkout: detached HEAD)
-        <parent>/fix/   fixed tree (copy of vul/ with `git checkout master`)
+        <parent>/fix/   fixed tree (git clone of vul/ checked out on master)
 
     The vul4j checkout leaves a 2-commit repo: detached HEAD = "vulnerable",
     master = "human_patch". The fix tree is a copy of that repo checked out on
@@ -190,7 +223,11 @@ def checkout_pair(
     With ``pair=False`` only the vulnerable tree is materialized (rule-scanning
     holdout does not need the fixed tree); the returned fix path may not exist.
 
-    Cached: existing trees are reused unless refresh=True.
+    Cached: existing trees are reused unless refresh=True. A cache whose git
+    metadata is broken (``git rev-parse --verify HEAD`` fails) is rebuilt
+    automatically. Materialization is serialized per parent dir with an flock
+    so concurrent batch processes cannot interleave rmtree/checkout/clone
+    on the same case.
     """
     if base_dir is None:
         parent = Path(tempfile.mkdtemp(prefix=f"vul4j-{case_id}-"))
@@ -203,23 +240,33 @@ def checkout_pair(
 
     vul_dir = parent / "vul"
     fix_dir = parent / "fix"
-    parent.mkdir(parents=True, exist_ok=True)
 
-    if refresh or not (vul_dir / ".git").is_dir():
-        if vul_dir.exists():
-            shutil.rmtree(vul_dir)
-        _vul4j_checkout(case_id, vul_dir)
-    _strip_vul4j_copies(vul_dir)
+    with _case_lock(parent):
+        if refresh or not _tree_ok(vul_dir):
+            if vul_dir.exists():
+                shutil.rmtree(vul_dir)
+            _vul4j_checkout(case_id, vul_dir)
+        _strip_vul4j_copies(vul_dir)
 
-    if pair and (refresh or not (fix_dir / ".git").is_dir()):
-        if fix_dir.exists():
-            shutil.rmtree(fix_dir)
-        shutil.copytree(vul_dir, fix_dir, symlinks=True)
-        proc = _run(["git", "-C", str(fix_dir), "checkout", "master"])
-        if proc.returncode != 0:
-            raise RuntimeError(f"git checkout master failed in {fix_dir}: {proc.stderr[-500:]}")
-    if pair:
-        _strip_vul4j_copies(fix_dir)
+        if pair and (refresh or not _tree_ok(fix_dir)):
+            if fix_dir.exists():
+                shutil.rmtree(fix_dir)
+            # Materialize fix/ via `git clone`, NOT copytree: the vul4j CLI's
+            # final commit can leave `git gc --auto` repacking loose objects in
+            # the background, and a file-level copytree races with gc's prune
+            # (scandir-then-read TOCTOU -> ENOENT under .git/objects/). A clone
+            # transfers objects through git's own machinery, which tolerates a
+            # concurrent gc. --branch master checks out the human_patch commit
+            # (vul HEAD is detached); --no-hardlinks keeps the two .git stores
+            # fully independent.
+            proc = _run([
+                "git", "clone", "--quiet", "--branch", "master", "--no-hardlinks",
+                str(vul_dir.resolve()), str(fix_dir.resolve()),
+            ])
+            if proc.returncode != 0:
+                raise RuntimeError(f"git clone vul->fix failed for {case_id}: {proc.stderr[-500:]}")
+        if pair:
+            _strip_vul4j_copies(fix_dir)
 
     return parent, vul_dir, fix_dir
 

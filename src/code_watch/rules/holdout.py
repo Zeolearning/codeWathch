@@ -259,9 +259,15 @@ def evaluate_holdout(
     """
     rules, missing = load_train_rules(train_case_ids)
     if missing:
+        print(
+            f"[holdout] WARNING: {len(missing)} train case(s) have no rule on disk, "
+            f"continuing without them: {', '.join(missing)}",
+            flush=True,
+        )
+    if not rules:
         raise RuntimeError(
-            f"No trained rule for: {', '.join(missing)}. Run the training phase first "
-            f"(e.g. code-watch batch --cases ...)."
+            f"No trained rules loaded for any of {len(train_case_ids)} train case(s). "
+            f"Run the training phase first (e.g. code-watch batch --cases ...)."
         )
 
     ok_rules: list[Rule] = []
