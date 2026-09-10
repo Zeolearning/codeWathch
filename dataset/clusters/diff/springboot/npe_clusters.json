@@ -1,0 +1,121 @@
+{
+  "model": "BAAI/bge-small-en-v1.5",
+  "input_count": 41,
+  "n_clusters": 5,
+  "n_noise": 5,
+  "clusters": [
+    {
+      "id": 1,
+      "label": "beanfactory, string, org, beanname, import",
+      "size": 16,
+      "hashes": [
+        "780397bd6b3b582de6671490c321170fd3d15a77",
+        "1fc9d38396df499ecdb29d28f5f180441e6a60dd",
+        "9775d40822c8b1e43d480f13ff1bf231cd0c0eb6",
+        "1f5291cd843a3243f0dc16af11c5a611faaf70e0",
+        "c4f756daee43f89e0ba832ceac17bac216fc899b",
+        "46815fc4835670be7a771df002a3e4a417dbd3d5",
+        "81e33dc801988068cef204a61b4c8e7d51f22fb7",
+        "247b7f0842b4b902b6dafae58bf1228e5668f99c",
+        "66d1f5cd0bb7324548c9ce0dfc1c34aacf536bcb",
+        "3118f14dbbdb653e976a994c0afa8c06e258f678",
+        "1831f3be1632410ca32d2ead28460b65c4b5e4ab",
+        "2bdeba8aaa23f925982897b426328cf55df86fbc",
+        "a1fe05f40b02cc79dc3777ff6f90a04ac4de6eac",
+        "5b4bd617204728c4910e45fde44ac46d0f5672d4",
+        "cae3a92eadb092bba6e860d57f70cd27bddf55f9",
+        "93a24eabb1bbb89b7a5fcdbd9fd6b1feb668174f"
+      ],
+      "sample_subjects": [
+        "Fix for wildcard recursive classpath handling",
+        "Fix potential Jetty MalformedURLException",
+        "Fix possible null pointer dereference",
+        "Fixed the check whether Log4j2 is available on the classpath",
+        "Fix MavenSettings’ handling of profiles activated by a file"
+      ]
+    },
+    {
+      "id": 2,
+      "label": "manager, safety, kotlin, url, null",
+      "size": 8,
+      "hashes": [
+        "68f42a7c484f5b2c3cbec4b2b146edc88b088533",
+        "af39d558ff5ca71fad662cc1fc7bb2927640751c",
+        "de666219058f9c5a22165a6efdbf63c09d4f2877",
+        "85d3f5a18076a9067876f460d6454ee9346c1311",
+        "53b0f0db606580dc79ce740de71c15deaa216158",
+        "2b6bdfe2771b1db83f51c33911eaa4130ff73769",
+        "d67aa3c0542460ba3cdded515681c71495f7136a",
+        "27c96d910986c9e282fb0bca767408185371ef44"
+      ],
+      "sample_subjects": [
+        "Fix null in help output",
+        "Fix potential NPE in RedisAutoConfiguration",
+        "Fix unsupported null argument",
+        "Fix NPE in test containers",
+        "Fix NPE when normalizing client tag URIs"
+      ]
+    },
+    {
+      "id": 0,
+      "label": "indices, original, authors, copyright, params",
+      "size": 5,
+      "hashes": [
+        "24ca44dbb422428eddb838b4158616e5720d6355",
+        "cd0bb969dbdebfe3b8808dc14dba2d1dcefe6dfb",
+        "6ca9f91a8bdbfaea3f4e5c980770d20db85631d3",
+        "5ec099756f0fa3afca79bc2378a281b8202cbcc4",
+        "55f67c9a522647039fd3294dee5cb83f4888160a"
+      ],
+      "sample_subjects": [
+        "Fix Elasticsearch health indicator",
+        "Fix Potential NPE in TomcatMetricsBinder.findContext()",
+        "Fix NPE when gracefully shutting down netty",
+        "Fix potential NPE when passing 'null' as params",
+        "Fix potential null problem in actuator"
+      ]
+    },
+    {
+      "id": 3,
+      "label": "installedon, sourceclass, container, release, sourcepackage",
+      "size": 4,
+      "hashes": [
+        "7f33d942f4d20608ac499aee4130c4ceeb2ff917",
+        "9c7612e681136fb222f351c0e3981dd0708f8317",
+        "83fbdc6ea897a61f62182b26733a4036b198a7a4",
+        "b7499222b87e493e3ce480fab79913ea9d7982ba"
+      ],
+      "sample_subjects": [
+        "Fix banner NPE when when using the default package",
+        "Fix NPE in WaitStrategy used for test containers",
+        "Fix NPE in FlywayEndpoint when migration.installedOn is null",
+        "Fix possible NPE when moving to snapshots"
+      ]
+    },
+    {
+      "id": 4,
+      "label": "license, path, awaiter, nettywebserver, request",
+      "size": 3,
+      "hashes": [
+        "4c29a8cfa2ae8dc872d790336e32479aa402d791",
+        "64a74c3bbb148b8726c5f8e8da8887eff3917df7",
+        "63b736d1f046ab6f7b082c0326e92f196ecd353f"
+      ],
+      "sample_subjects": [
+        "Fix NPE in NettyWebServer stop",
+        "Fix NullPointerException with empty X-Forwarded-For header",
+        "Fix NPE when waiting for named socket path to become available"
+      ]
+    }
+  ],
+  "noise_hashes": [
+    "0fdd7e18431170e2415dbdbec89a7b7e1ed8b6c6",
+    "06eb24557e42a7369c24a584d363f84ada8206cd",
+    "7a148747a029bd085da66398d278e475765f0304",
+    "9de517281eb0766068672f62e79246ff06ca3e1f",
+    "71f4c3442f52064bb2001fcf5db1b21ba7afc208"
+  ],
+  "reduction": "umap:384d->10d(n_neighbors=15,seed=42)",
+  "matched_total": 41,
+  "excluded_count": 0
+}

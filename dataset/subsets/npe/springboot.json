@@ -1,0 +1,545 @@
+{
+  "repo": "springboot",
+  "type": "npe",
+  "count": 41,
+  "sorted_by": "commit_date asc",
+  "types_available": [
+    "npe",
+    "resource_leak"
+  ],
+  "commits": [
+    {
+      "seq": 1,
+      "hash": "68f42a7c484f5b2c3cbec4b2b146edc88b088533",
+      "subject": "Fix null in help output",
+      "commit_date": "2013-07-10T11:21:17-07:00",
+      "author_date": "2013-07-10T11:21:17-07:00",
+      "matched_terms": [
+        "null (fix context)"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 2,
+      "hash": "780397bd6b3b582de6671490c321170fd3d15a77",
+      "subject": "Fix for wildcard recursive classpath handling",
+      "commit_date": "2014-01-07T18:05:10+00:00",
+      "author_date": "2014-01-07T11:41:52+00:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 3,
+      "hash": "0fdd7e18431170e2415dbdbec89a7b7e1ed8b6c6",
+      "subject": "Fix TomcatContextCustomizers Assert.notNull checks",
+      "commit_date": "2014-01-28T10:07:27-08:00",
+      "author_date": "2014-01-28T17:39:55+00:00",
+      "matched_terms": [
+        "null (fix context)"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 4,
+      "hash": "7f33d942f4d20608ac499aee4130c4ceeb2ff917",
+      "subject": "Fix banner NPE when when using the default package",
+      "commit_date": "2014-12-14T13:51:11-08:00",
+      "author_date": "2014-12-14T13:51:11-08:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 5,
+      "hash": "1fc9d38396df499ecdb29d28f5f180441e6a60dd",
+      "subject": "Fix potential Jetty MalformedURLException",
+      "commit_date": "2015-01-06T22:43:39-08:00",
+      "author_date": "2014-12-28T02:23:36+02:00",
+      "matched_terms": [
+        "NullPointerException"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 6,
+      "hash": "24ca44dbb422428eddb838b4158616e5720d6355",
+      "subject": "Fix Elasticsearch health indicator",
+      "commit_date": "2015-04-13T16:48:58+01:00",
+      "author_date": "2015-04-13T16:39:47+02:00",
+      "matched_terms": [
+        "null (fix context)"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 7,
+      "hash": "9775d40822c8b1e43d480f13ff1bf231cd0c0eb6",
+      "subject": "Fix possible null pointer dereference",
+      "commit_date": "2015-12-08T10:28:15+01:00",
+      "author_date": "2015-12-05T21:30:23+01:00",
+      "matched_terms": [
+        "null pointer"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 8,
+      "hash": "1f5291cd843a3243f0dc16af11c5a611faaf70e0",
+      "subject": "Fixed the check whether Log4j2 is available on the classpath",
+      "commit_date": "2016-01-12T16:14:11+01:00",
+      "author_date": "2015-12-23T12:32:28+01:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 9,
+      "hash": "c4f756daee43f89e0ba832ceac17bac216fc899b",
+      "subject": "Fix MavenSettings’ handling of profiles activated by a file",
+      "commit_date": "2016-01-18T13:18:16+00:00",
+      "author_date": "2016-01-18T13:18:03+00:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 10,
+      "hash": "af39d558ff5ca71fad662cc1fc7bb2927640751c",
+      "subject": "Fix potential NPE in RedisAutoConfiguration",
+      "commit_date": "2016-04-12T14:51:18-07:00",
+      "author_date": "2016-04-12T20:46:10+01:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 11,
+      "hash": "46815fc4835670be7a771df002a3e4a417dbd3d5",
+      "subject": "Fix potential @AutoConfigureTestDatabase NPE",
+      "commit_date": "2016-09-15T16:06:56-07:00",
+      "author_date": "2016-09-15T16:06:56-07:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 12,
+      "hash": "de666219058f9c5a22165a6efdbf63c09d4f2877",
+      "subject": "Fix unsupported null argument",
+      "commit_date": "2017-06-07T20:37:37-07:00",
+      "author_date": "2017-06-07T20:37:37-07:00",
+      "matched_terms": [
+        "null (fix context)"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 13,
+      "hash": "06eb24557e42a7369c24a584d363f84ada8206cd",
+      "subject": "Fix HttpTunnelConnectionTests following changes for null handling",
+      "commit_date": "2017-06-08T14:38:59+01:00",
+      "author_date": "2017-06-08T14:38:59+01:00",
+      "matched_terms": [
+        "null (fix context)"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 14,
+      "hash": "4c29a8cfa2ae8dc872d790336e32479aa402d791",
+      "subject": "Fix NPE in NettyWebServer stop",
+      "commit_date": "2017-06-26T14:27:30-07:00",
+      "author_date": "2017-06-23T15:30:23-07:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 15,
+      "hash": "81e33dc801988068cef204a61b4c8e7d51f22fb7",
+      "subject": "Fix NPE in url is null and no embedded database is available",
+      "commit_date": "2017-10-25T13:57:00+02:00",
+      "author_date": "2017-10-25T13:57:00+02:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 16,
+      "hash": "85d3f5a18076a9067876f460d6454ee9346c1311",
+      "subject": "Fix NPE in test containers",
+      "commit_date": "2018-01-08T22:04:59-08:00",
+      "author_date": "2018-01-08T22:04:05-08:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 17,
+      "hash": "247b7f0842b4b902b6dafae58bf1228e5668f99c",
+      "subject": "Fix WebFlux default error view for null exception messages",
+      "commit_date": "2018-01-19T10:13:59+01:00",
+      "author_date": "2018-01-19T10:13:59+01:00",
+      "matched_terms": [
+        "NullPointerException"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 18,
+      "hash": "53b0f0db606580dc79ce740de71c15deaa216158",
+      "subject": "Fix NPE when normalizing client tag URIs",
+      "commit_date": "2018-01-26T22:12:07-08:00",
+      "author_date": "2018-01-26T22:09:52-08:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 19,
+      "hash": "66d1f5cd0bb7324548c9ce0dfc1c34aacf536bcb",
+      "subject": "Fix expansion of static-locations array",
+      "commit_date": "2018-03-06T15:19:59+01:00",
+      "author_date": "2018-03-06T15:19:59+01:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 20,
+      "hash": "9c7612e681136fb222f351c0e3981dd0708f8317",
+      "subject": "Fix NPE in WaitStrategy used for test containers",
+      "commit_date": "2018-04-12T10:30:36-07:00",
+      "author_date": "2018-04-12T10:30:36-07:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 21,
+      "hash": "3118f14dbbdb653e976a994c0afa8c06e258f678",
+      "subject": "Fix NPE when OnExpressionCondition is invoked with a null BeanFactory",
+      "commit_date": "2018-05-28T14:22:38+02:00",
+      "author_date": "2018-05-28T14:22:38+02:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 22,
+      "hash": "1831f3be1632410ca32d2ead28460b65c4b5e4ab",
+      "subject": "Fix NPE when Collection contains unbound children",
+      "commit_date": "2018-07-24T17:42:51-07:00",
+      "author_date": "2018-07-24T17:22:45-07:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 23,
+      "hash": "83fbdc6ea897a61f62182b26733a4036b198a7a4",
+      "subject": "Fix NPE in FlywayEndpoint when migration.installedOn is null",
+      "commit_date": "2018-08-09T11:10:02+01:00",
+      "author_date": "2018-08-08T18:40:30+03:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 24,
+      "hash": "2b6bdfe2771b1db83f51c33911eaa4130ff73769",
+      "subject": "Fix Reactive...Context NPE",
+      "commit_date": "2018-10-04T10:16:23-07:00",
+      "author_date": "2018-10-04T10:16:10-07:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 25,
+      "hash": "64a74c3bbb148b8726c5f8e8da8887eff3917df7",
+      "subject": "Fix NullPointerException with empty X-Forwarded-For header",
+      "commit_date": "2019-02-28T14:51:25+01:00",
+      "author_date": "2019-02-27T15:37:01+02:00",
+      "matched_terms": [
+        "NullPointerException"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 26,
+      "hash": "63b736d1f046ab6f7b082c0326e92f196ecd353f",
+      "subject": "Fix NPE when waiting for named socket path to become available",
+      "commit_date": "2020-01-27T11:38:19+00:00",
+      "author_date": "2020-01-27T09:24:41+00:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 27,
+      "hash": "2bdeba8aaa23f925982897b426328cf55df86fbc",
+      "subject": "Fix NPE in BeanDefinitionLoader when XML support is disabled",
+      "commit_date": "2020-08-03T09:53:40+01:00",
+      "author_date": "2020-08-01T12:35:51+02:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 28,
+      "hash": "cd0bb969dbdebfe3b8808dc14dba2d1dcefe6dfb",
+      "subject": "Fix Potential NPE in TomcatMetricsBinder.findContext()",
+      "commit_date": "2021-08-10T09:58:18+02:00",
+      "author_date": "2021-08-10T09:58:18+02:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 29,
+      "hash": "d67aa3c0542460ba3cdded515681c71495f7136a",
+      "subject": "Fix null safety in Kotlin examples",
+      "commit_date": "2022-03-08T12:34:02+01:00",
+      "author_date": "2022-03-08T12:28:18+01:00",
+      "matched_terms": [
+        "null (fix context)"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 30,
+      "hash": "a1fe05f40b02cc79dc3777ff6f90a04ac4de6eac",
+      "subject": "Fix NPE in configprops endpoint",
+      "commit_date": "2022-04-07T19:40:29+01:00",
+      "author_date": "2022-03-04T22:55:31+08:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 31,
+      "hash": "7a148747a029bd085da66398d278e475765f0304",
+      "subject": "Fix NPE in RabbitProperties if user is given but password is not",
+      "commit_date": "2023-01-11T11:13:51+01:00",
+      "author_date": "2023-01-11T11:13:51+01:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 32,
+      "hash": "6ca9f91a8bdbfaea3f4e5c980770d20db85631d3",
+      "subject": "Fix NPE when gracefully shutting down netty",
+      "commit_date": "2023-05-04T11:54:05+02:00",
+      "author_date": "2023-05-04T11:54:05+02:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 33,
+      "hash": "5b4bd617204728c4910e45fde44ac46d0f5672d4",
+      "subject": "Fix possible NullPointerException from getPermission()",
+      "commit_date": "2024-05-01T22:42:52-07:00",
+      "author_date": "2024-03-08T16:41:40+09:00",
+      "matched_terms": [
+        "NullPointerException"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 34,
+      "hash": "9de517281eb0766068672f62e79246ff06ca3e1f",
+      "subject": "Fix potential NPE in GraylogExtendedLogFormatProperties",
+      "commit_date": "2025-01-19T08:06:40+01:00",
+      "author_date": "2025-01-16T21:03:50+02:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 35,
+      "hash": "b7499222b87e493e3ce480fab79913ea9d7982ba",
+      "subject": "Fix possible NPE when moving to snapshots",
+      "commit_date": "2025-02-08T10:09:38+00:00",
+      "author_date": "2025-02-08T10:09:38+00:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 36,
+      "hash": "5ec099756f0fa3afca79bc2378a281b8202cbcc4",
+      "subject": "Fix potential NPE when passing 'null' as params",
+      "commit_date": "2025-03-07T08:17:37+01:00",
+      "author_date": "2025-03-07T08:17:37+01:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 37,
+      "hash": "cae3a92eadb092bba6e860d57f70cd27bddf55f9",
+      "subject": "Fix NPE with Hikari when DatabaseDriver has null driverClassName",
+      "commit_date": "2025-04-04T08:38:27+01:00",
+      "author_date": "2025-04-04T08:38:11+01:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 38,
+      "hash": "55f67c9a522647039fd3294dee5cb83f4888160a",
+      "subject": "Fix potential null problem in actuator",
+      "commit_date": "2025-04-24T08:23:49+02:00",
+      "author_date": "2025-04-24T08:23:49+02:00",
+      "matched_terms": [
+        "null (fix context)"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 39,
+      "hash": "27c96d910986c9e282fb0bca767408185371ef44",
+      "subject": "Fix null safety of Gradle Kotlin scripts with Gradle 9",
+      "commit_date": "2025-08-20T12:32:10+01:00",
+      "author_date": "2025-08-20T12:28:25+01:00",
+      "matched_terms": [
+        "null (fix context)"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 40,
+      "hash": "71f4c3442f52064bb2001fcf5db1b21ba7afc208",
+      "subject": "Fix \"String.startsWith(String)\" NPE when refreshing in eclipse",
+      "commit_date": "2026-01-26T16:26:28-08:00",
+      "author_date": "2026-01-26T16:02:09-08:00",
+      "matched_terms": [
+        "NPE"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    },
+    {
+      "seq": 41,
+      "hash": "93a24eabb1bbb89b7a5fcdbd9fd6b1feb668174f",
+      "subject": "Fix null customizer checks in HTTP client builders",
+      "commit_date": "2026-08-30T20:16:15+02:00",
+      "author_date": "2026-08-30T13:12:35+09:00",
+      "matched_terms": [
+        "null (fix context)"
+      ],
+      "all_matched_types": [
+        "npe"
+      ]
+    }
+  ]
+}

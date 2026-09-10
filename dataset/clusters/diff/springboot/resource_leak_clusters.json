@@ -1,0 +1,18 @@
+{
+  "model": "BAAI/bge-small-en-v1.5",
+  "input_count": 6,
+  "n_clusters": 0,
+  "n_noise": 6,
+  "clusters": [],
+  "noise_hashes": [
+    "5a4238acfcea821f38b660170b8c0ffdb58375bd",
+    "244b5391bce46880ae0055214a21e1725ab944da",
+    "ebebe09a9d0f49deb8dac9cd2992d7c79f1b39ec",
+    "4db53601b5652aaa7460320532c72936c380bf87",
+    "dc8b55c0efb10650a0a82747bed322522b625d2f",
+    "d00566ae5dc1ea0869c0bf84e65053bde433c8b8"
+  ],
+  "reduction": null,
+  "matched_total": 6,
+  "excluded_count": 0
+}

@@ -1,0 +1,327 @@
+{
+  "repo": "dubbo",
+  "type": "resource_leak",
+  "count": 24,
+  "sorted_by": "commit_date asc",
+  "types_available": [
+    "npe",
+    "resource_leak"
+  ],
+  "commits": [
+    {
+      "seq": 1,
+      "hash": "833ba033ccb3cd2a573776637c6db9d154d9f5ba",
+      "subject": "Fix DubboShutdownHook Memory Leak (#2922)",
+      "commit_date": "2018-12-10T13:39:16+08:00",
+      "author_date": "2018-12-10T13:39:16+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 2,
+      "hash": "669705c7d3fa69244cb3301af0f2cd1360609857",
+      "subject": "Fix FailbackClusterInvoker one risk of memory leak #2425 (#2822)",
+      "commit_date": "2018-12-25T10:30:26+08:00",
+      "author_date": "2018-12-25T10:30:26+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 3,
+      "hash": "09ba93e937c952af6897e482446ee9793e1e5f75",
+      "subject": "fix memory leak of waitForRemove attribute (#7119)",
+      "commit_date": "2021-01-23T15:42:21+08:00",
+      "author_date": "2021-01-23T15:42:21+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 4,
+      "hash": "cf78a56962aeec923348909ffccf3e056427d10c",
+      "subject": "fix memory leak for stringAddress cache (#7144)",
+      "commit_date": "2021-01-28T22:47:34+08:00",
+      "author_date": "2021-01-28T22:47:34+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 5,
+      "hash": "3318ba26374d57468b421d9c5d45aad79b18f149",
+      "subject": "Fix mem leak (#7301)",
+      "commit_date": "2021-03-02T10:17:11+08:00",
+      "author_date": "2021-03-02T10:17:11+08:00",
+      "matched_terms": [
+        "leak",
+        "mem leak (variant)"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 6,
+      "hash": "303a5aff45e38249c00603a3aebad1b04489f648",
+      "subject": "Fix mem leak caused by duplicate reconnect task (#7537)",
+      "commit_date": "2021-04-13T15:45:36+08:00",
+      "author_date": "2021-04-13T15:45:36+08:00",
+      "matched_terms": [
+        "leak",
+        "mem leak (variant)"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 7,
+      "hash": "f7933b735b4e051b7378418cc0688c3c3890069b",
+      "subject": "Fix MetadataService connections leak (#8555)",
+      "commit_date": "2021-08-23T13:40:12+08:00",
+      "author_date": "2021-08-23T13:40:12+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 8,
+      "hash": "838493c4c4eaa09fe7291ef6e6963bf816475219",
+      "subject": "Fix netty ssl file leak (#9245)",
+      "commit_date": "2021-11-10T13:35:29+08:00",
+      "author_date": "2021-11-10T13:35:29+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 9,
+      "hash": "f69c2f3c24793d809c71496f8517d13732364671",
+      "subject": "Fix nacos registry memory leak (#9261)",
+      "commit_date": "2021-11-18T20:30:34+08:00",
+      "author_date": "2021-11-18T20:30:34+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 10,
+      "hash": "091168afcac1b532df12a063cc8bbcd0819665bb",
+      "subject": "Fix mem leak (#9919)",
+      "commit_date": "2022-04-14T11:04:30+08:00",
+      "author_date": "2022-04-14T11:04:30+08:00",
+      "matched_terms": [
+        "leak",
+        "mem leak (variant)"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 11,
+      "hash": "7facd5be19ea80ffee05172931b589ddc90ace8a",
+      "subject": "Fix memory leak when hashed wheel time re-put (#12022)",
+      "commit_date": "2023-04-11T19:00:02+08:00",
+      "author_date": "2023-04-11T19:00:02+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 12,
+      "hash": "830c460c0a2db7ad6d5caed9a0b7e2890952da77",
+      "subject": "Fix port unification channel leak (#12212)",
+      "commit_date": "2023-04-28T17:14:01+08:00",
+      "author_date": "2023-04-28T17:14:01+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 13,
+      "hash": "521b3e01460a70cc8c823e4e8c07f3cff56bc0c7",
+      "subject": "fix memory leak (#12805)",
+      "commit_date": "2023-08-02T17:30:32+08:00",
+      "author_date": "2023-08-02T17:30:32+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 14,
+      "hash": "757643cf8c91e3b2dfdc992a5cbb929e159cdbc6",
+      "subject": "fix rest thread memory leak (#12842)",
+      "commit_date": "2023-08-09T15:46:56+08:00",
+      "author_date": "2023-08-09T15:46:56+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 15,
+      "hash": "501bdfaaef53c02ced2799c87ca64b9ecbd29507",
+      "subject": "Fix memory leak in ScopeBeanFactory (#13901)",
+      "commit_date": "2024-03-12T11:25:14+08:00",
+      "author_date": "2024-03-12T11:25:14+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 16,
+      "hash": "ca7151e53166fc69079fefff074ee369aa29f134",
+      "subject": "fix: Bytebuf resource leak (#14071)",
+      "commit_date": "2024-04-16T14:24:28+08:00",
+      "author_date": "2024-04-16T14:24:28+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 17,
+      "hash": "487fa4f7c73a9339e69409c934e4ec669ba084e1",
+      "subject": "Fix memory leak (#14127)",
+      "commit_date": "2024-05-08T14:08:57+08:00",
+      "author_date": "2024-05-08T14:08:57+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 18,
+      "hash": "2c38cab1d2bb8b1c6d49fab3e93690bbde4817fb",
+      "subject": "fix memory leak of tri protocol (#13973)",
+      "commit_date": "2024-05-14T13:58:01+08:00",
+      "author_date": "2024-05-14T13:58:01+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 19,
+      "hash": "11900330d91f528cfcbdc4755bdd23651b516f52",
+      "subject": "fix NettyCodecAdapter decoder memory leak (#14538)",
+      "commit_date": "2024-08-28T15:30:14+08:00",
+      "author_date": "2024-08-28T15:30:14+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 20,
+      "hash": "b9a2f194f044c07532715e212ab2e72155be9bad",
+      "subject": "Fix memory leak in HttpPostRequestDecoder (#14741)",
+      "commit_date": "2024-10-02T10:16:24+08:00",
+      "author_date": "2024-10-02T10:16:24+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 21,
+      "hash": "61d7f2e412a448983bfa102c4aa97e817c08b07a",
+      "subject": "Fix memory leak in HttpPostRequestDecoder when body is empty (#14760)",
+      "commit_date": "2024-10-11T13:41:45+08:00",
+      "author_date": "2024-10-11T13:41:45+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 22,
+      "hash": "68e148080e5143fd29b58c98de7b91b1a7d5d9f3",
+      "subject": "Fix memory leak when OOM (#15207)",
+      "commit_date": "2025-03-05T16:49:09+08:00",
+      "author_date": "2025-03-05T16:49:09+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 23,
+      "hash": "e140c061a2cba43dd41b750d66f70003f0281815",
+      "subject": "Fix some potential resource leaks (#15454)",
+      "commit_date": "2025-06-20T18:35:19+08:00",
+      "author_date": "2025-06-20T18:35:19+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 24,
+      "hash": "d2c4bd73f5192c640ed830712a52338578f83522",
+      "subject": "fix: make SpringBootConfigPropsTest immune to leaked metrics System properties (#16420)",
+      "commit_date": "2026-08-25T14:02:41+08:00",
+      "author_date": "2026-08-25T14:02:41+08:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,255 @@
+{
+  "model": "BAAI/bge-small-en-v1.5",
+  "input_count": 83,
+  "n_clusters": 12,
+  "n_noise": 20,
+  "clusters": [
+    {
+      "id": 1,
+      "label": "urladdress, usejavapackageaspath, path, serviceinfo, ismatch",
+      "size": 9,
+      "hashes": [
+        "4cf9c51e2fd93cd3034e8c6a6a15d4b07db5de35",
+        "29b761c3c75b4325c0ae72dc1b427042510a1f63",
+        "f8e5a92250f81bf20c6db6a653cdf9ce80952787",
+        "dd94c1561ade672cc253eef79828f6d2daf5a676",
+        "738f3ff69a01bcfa9b6b473c8cc51e69a33d54bf",
+        "df0de49b8c19cae9b9d1d1e4f6e3a37111c6f7ec",
+        "d4c1fb37f0543a7db0d845660ca8b07427017708",
+        "b7d52c39ac35527e331282945f3e8fe20fc0dd61",
+        "2626e28c16193a099b9cf89e133cd9d55b7d9add"
+      ],
+      "sample_subjects": [
+        "Fixed #893, remove null check in CacheFilter.",
+        "fix for issue 10303 (#10306)",
+        "fix NPE bug of URL (#10921)",
+        "fix router match condition (#12491)",
+        "Fix proto `package` and ` java_package` issue (#13559)"
+      ]
+    },
+    {
+      "id": 8,
+      "label": "propertyname, version, header, v, getvalue",
+      "size": 8,
+      "hashes": [
+        "48fdbb0ee955fc542f9abe1df772f600a79bc09d",
+        "d962113622f0a4db5d6a0fa06cfb3055ba92805d",
+        "5434ab74c724e4ed0f4b7dab11e6758a0a9c48d8",
+        "bfb5e3185332767fe3db5019a4b20475e94a6a6f",
+        "9713ad64b3914d45847905cfec7e38d849fdf18d",
+        "1729d5b69e8ce0fce48a39f1566c8618e6a0001d",
+        "35746aaf5a3e6eab9181fedb37fd8cc00793469c",
+        "392260a30e3ead460469c6d7943ece598bb49809"
+      ],
+      "sample_subjects": [
+        "fix(AbstractProxyInvoker):fix NPE problem(#788)",
+        "fix NPE",
+        "Fix npe when package is null. (#3557)",
+        "fix NullPointerException when address already in use (#10785)",
+        "fix ssl npe (#11093)"
+      ]
+    },
+    {
+      "id": 10,
+      "label": "balancedinvoker, deployer, sticky, zookeeperdatalistener, resolvedtype",
+      "size": 7,
+      "hashes": [
+        "2d1f1effee8efd28e11b36c8b7ae5c61795ac1a0",
+        "29becdc22af9a3e0e9d7367eeed4b65b082c8cd3",
+        "6b095f1c68b546c9f0ce72dd91b9c1d2792c60be",
+        "9c72fdea69e7f5a1bf034bf92bbcd7b808845a43",
+        "1d1bb26e79efc55ed78cf8bba1f486e5691fcd32",
+        "95439fb23ce9855197843e5f2ee02c4713f09846",
+        "b4d680665c24717f88731f126f9e78b4cf7912f9"
+      ],
+      "sample_subjects": [
+        "Fix NPE when calculateState (#9287)",
+        "Fix npe in zone aware invoker (#9851)",
+        "Fix npe (#10457)",
+        "Fix NPE issue#12292 (#12293)",
+        "Fix potential NPE (#13505)"
+      ]
+    },
+    {
+      "id": 11,
+      "label": "serviceinfo, atomiclong, reportwriter, metadatainfo, getprotocolservicekey",
+      "size": 7,
+      "hashes": [
+        "a2e5102657a8abe03812f0b025f457ca3d994921",
+        "240c1dc61fe3f36164f3eaba6efe40b5825da1d2",
+        "dc8ba019dcf913c3e8294f4f6a340357eddab787",
+        "c7c5af3d156a6c369378a43f1a92b5e841ba31b5",
+        "70660cb9697fac3c48bcfad0f80dff7d09dbc05c",
+        "04d4825b88f990f8b0e04bfb63edd04621c30861",
+        "f224fc5a47ae87817a91241109f1fcab1fee1539"
+      ],
+      "sample_subjects": [
+        "Fix NPE when unexport Metadata Service (#6450)",
+        "Fix DubboTestChecker NPE (#9081)",
+        "fix when consumer shutdown occurs npe (#9409)",
+        "fix when consumer shutdown occurs npe (#9409)",
+        "fix issue: unexport() throws NPE when register fail. (#10893)"
+      ]
+    },
+    {
+      "id": 3,
+      "label": "executor, waiter, map, threadlessexecutor, servershutdowntimeoutmills",
+      "size": 6,
+      "hashes": [
+        "18e8645d8301f110b2ab33f9fef1a0289578c567",
+        "0c11a0ddcfc607a1aa45ef2915479bc59f1e3e7d",
+        "e6e68f6b8486ecc81973ad1a8b90b874c85086fe",
+        "c10d95b56a48e88d9014238a56e7ee1ea18a33d2",
+        "5d1c0eae1cf715ab469c5201a183963dd387e765",
+        "af2625c6deb13b9b5f4193ce6c7b78115062ad73"
+      ],
+      "sample_subjects": [
+        "fix monitor filter npe (#9108)",
+        "fix #11986 ConcurrentHashMapUtils lock bug (#11987)",
+        "Fix channel close event cause hanging thread (#12503)",
+        "Fix RejectException (#12950)",
+        "fix(3.2): Triple Reactor OneToMany Handler null pointer fix and DubboFilter support (#14125)"
+      ]
+    },
+    {
+      "id": 5,
+      "label": "atomicboolean, urls, proxy, rule, destroy",
+      "size": 5,
+      "hashes": [
+        "bdfc5007fa5cad80d22b5c0422e55c1fcb745dc4",
+        "f8f752a9242fbd5b6fd2ea4174894a4bb47af06c",
+        "3440f39c10dc333dfb6e1703e0e2ee1350738557",
+        "a57394a85c90b450393755646e6467020f45de90",
+        "898d2996bfb5db473717bd93a46fe0594cb1c929"
+      ],
+      "sample_subjects": [
+        "Fix NPE in TagRouter",
+        "fix optional NPE",
+        "Fix NPE when parse migration rule error happen (#8280)",
+        "fix destroy reference cause NPE (#10050)",
+        "Fix getUrl NPE after setInvokers (#10738)"
+      ]
+    },
+    {
+      "id": 4,
+      "label": "rmiproxyfactorybean, setremoteinvocationfactory, methodinvocation, field, isgeneric",
+      "size": 4,
+      "hashes": [
+        "b2ce7b2c10d57d232582a185d0877cc404b352ea",
+        "16f1fad340a88571f85c26b3f028f30c2d5ad62e",
+        "6580b0185cb39bae755b46e3f5a4fd779166f504",
+        "25548c345bdfc1dcf222b68c2057cd472e2b74a0"
+      ],
+      "sample_subjects": [
+        "fix telnet invoke NPE #2218 (#2273)",
+        "fix useless null check in RmiProtocol (#5567)",
+        "Fix PojoUtils NPE problem (#12380)",
+        "Fix NPE if name not match in PojoUtils (#12404)"
+      ]
+    },
+    {
+      "id": 6,
+      "label": "dubbo, conditionalonproperty, import, org, modulemodel",
+      "size": 4,
+      "hashes": [
+        "5230444d5f83e586ce759d15e02ee799cf6241e7",
+        "726cdd74c2cae880da8f7c953f59cc23ee439541",
+        "57c58de0adeab8f3717ac78e69a9470060df748c",
+        "0b62b40922943f3edad594916a3ce63ae9322232"
+      ],
+      "sample_subjects": [
+        "fix publish null value when use consul config center (#6351)",
+        "Fix DubboProtocol state & Fix NPE when destroy (#8809)",
+        "Fix qos command remote check (#11506)",
+        "fix: bugfix of tracing zipkin npe when start (#12115)"
+      ]
+    },
+    {
+      "id": 9,
+      "label": "consumermodel, servicekey, url, setservicemodel, getservicemodel",
+      "size": 4,
+      "hashes": [
+        "33e46df33069e5f103a8f919c9b9824647150a4e",
+        "2e8dca636792f354f31661eca0d151e12a79cd4f",
+        "13c15fdc2e44f8426d711d558fcaf7737d74065b",
+        "89ef73d0234f71e7543fb00fd350afcad31bece7"
+      ],
+      "sample_subjects": [
+        "Fix NPE in MetadataInfo (#8131)",
+        "fix #8244 getServiceKey throw npe. (#8265)",
+        "fix: the consumerModel's NPE in TripleClientHandler (#8734)",
+        "Fix NPE when using tri as metadata service protocol (#10639)"
+      ]
+    },
+    {
+      "id": 0,
+      "label": "argument, registertype, getsuperclass, actualrequesttypes, serialize",
+      "size": 3,
+      "hashes": [
+        "b5f657e9a3baada81831b6dbace52dba99612d87",
+        "9e38c48b685b6e47862f697add746b018c745ab0",
+        "3f2e0e18c96a48af66896a1a76abfabb70c7b034"
+      ],
+      "sample_subjects": [
+        "fix NPE on serialization checking when request timed out (#8547)",
+        "fix tri wrapper pack npe (#11656)",
+        "Fix AotUtils NPE (#13825)"
+      ]
+    },
+    {
+      "id": 2,
+      "label": "latch, listeners, configurationlistener, subscribeurl, set",
+      "size": 3,
+      "hashes": [
+        "23f0e52486e21ff8af15820fb9274ce93570b86c",
+        "f2176cd9a1d1ed34bb902ca96cd3af84ba904b47",
+        "1ab11d34bff5cf3a977deebb7641f7d02a7570f0"
+      ],
+      "sample_subjects": [
+        "fix NPE when no listeners registered for key",
+        "Fix recover and zk notify concurrent problem. (#7443)",
+        "Fix NPE when removing registry (#11514)"
+      ]
+    },
+    {
+      "id": 7,
+      "label": "level, logger, invocation, currentthread, methoddescriptor",
+      "size": 3,
+      "hashes": [
+        "879fd811283c28a5fcb4dfebd383e05b5e500cb0",
+        "90325f2fe63dd17d17aea2a15cfb644aa31fa8df",
+        "4be8594bdefa3b941d062cbcee0794a3718c58b1"
+      ],
+      "sample_subjects": [
+        "fix log level is null in Slf4j and fix not valid in Log4j2 (#12671)",
+        "fix triple npe (#12918)",
+        "fix(3.2): injvm invoker throws ClassCastException (#14346)"
+      ]
+    }
+  ],
+  "noise_hashes": [
+    "e2f3346d9d1dff2bf6bf3ac2802e83d46b9923c0",
+    "8be772625d4f8eb18bfd5fa6d2bb2f0accd52270",
+    "11fd99937f1b06994186d6afbf60dcac8f90b79f",
+    "f8b8b3d2ee6d97f9771411a0fdab3f5701c1fc32",
+    "7447f3372d960ce9d73331ad6c16d34448853b51",
+    "affbd638e6c39653fe3fd3893e55697123775917",
+    "89aac3c2a4159701a02902777394dfa2ab328a68",
+    "9ecb955b9490b8c14df0773143e4f130f84e9418",
+    "e4415e56eeaf308407c09d662330a5ea31c232db",
+    "08dea8118ba9cef853c49fc07184bac5cf19336c",
+    "e6f169d0d424de440041f9447f406b7a48868c9b",
+    "0489702e1c1fdb62ad01bd30dc48a673656db500",
+    "87eb3fdda812c6551ea0c77e89b0ef6809cde0b7",
+    "df0241b6dde0463517be3f5fd6968ea0a2dd9cf0",
+    "c0574962ecf48cf7331daf7d3ce43027300ca14e",
+    "83240f5083833f502070d2fc2aa0cf4d0b04a1e4",
+    "e60f24cb7fc0ec551ccb590b10b6ab3fe74d472d",
+    "b7cd1f933f0df9e2d94734760200938e9097e72f",
+    "6f4fcf41f79124cd3b72166fa0c6a9e1bbbc9946",
+    "ed10d3164be9da68198da4d535c8b7ed50d94e2b"
+  ],
+  "reduction": "umap:384d->10d(n_neighbors=15,seed=42)",
+  "matched_total": 83,
+  "excluded_count": 0
+}

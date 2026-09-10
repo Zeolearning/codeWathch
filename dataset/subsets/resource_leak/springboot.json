@@ -1,0 +1,90 @@
+{
+  "repo": "springboot",
+  "type": "resource_leak",
+  "count": 6,
+  "sorted_by": "commit_date asc",
+  "types_available": [
+    "npe",
+    "resource_leak"
+  ],
+  "commits": [
+    {
+      "seq": 1,
+      "hash": "5a4238acfcea821f38b660170b8c0ffdb58375bd",
+      "subject": "Fix potential resource leaks",
+      "commit_date": "2018-01-17T13:54:50+01:00",
+      "author_date": "2018-01-13T15:10:52+03:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 2,
+      "hash": "244b5391bce46880ae0055214a21e1725ab944da",
+      "subject": "Fix file handle leak in JarFileArchiveTests",
+      "commit_date": "2020-01-14T17:20:29+00:00",
+      "author_date": "2020-01-14T17:20:29+00:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 3,
+      "hash": "ebebe09a9d0f49deb8dac9cd2992d7c79f1b39ec",
+      "subject": "Fix file handle leak in JarFileTests",
+      "commit_date": "2020-01-15T20:43:54+00:00",
+      "author_date": "2020-01-15T20:38:59+00:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 4,
+      "hash": "4db53601b5652aaa7460320532c72936c380bf87",
+      "subject": "Fix spring.netty.leak-detection metadata",
+      "commit_date": "2021-06-25T19:38:07+02:00",
+      "author_date": "2021-06-25T19:38:07+02:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 5,
+      "hash": "dc8b55c0efb10650a0a82747bed322522b625d2f",
+      "subject": "Fix connection leak in SqlDialectLookup",
+      "commit_date": "2024-01-10T09:46:39+01:00",
+      "author_date": "2023-12-25T09:55:33+09:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    },
+    {
+      "seq": 6,
+      "hash": "d00566ae5dc1ea0869c0bf84e65053bde433c8b8",
+      "subject": "Fix watchdog thread leak in JmsHealthIndicator on start failure",
+      "commit_date": "2026-08-25T09:07:25+02:00",
+      "author_date": "2026-08-24T12:32:41+09:00",
+      "matched_terms": [
+        "leak"
+      ],
+      "all_matched_types": [
+        "resource_leak"
+      ]
+    }
+  ]
+}
