@@ -1,0 +1,89 @@
+{
+  "model": "BAAI/bge-small-en-v1.5",
+  "input_count": 41,
+  "n_clusters": 2,
+  "n_noise": 12,
+  "clusters": [
+    {
+      "id": 1,
+      "label": "npe, closes, fix, fixes, potential",
+      "size": 24,
+      "hashes": [
+        "71f4c3442f52064bb2001fcf5db1b21ba7afc208",
+        "cae3a92eadb092bba6e860d57f70cd27bddf55f9",
+        "5ec099756f0fa3afca79bc2378a281b8202cbcc4",
+        "b7499222b87e493e3ce480fab79913ea9d7982ba",
+        "9de517281eb0766068672f62e79246ff06ca3e1f",
+        "6ca9f91a8bdbfaea3f4e5c980770d20db85631d3",
+        "7a148747a029bd085da66398d278e475765f0304",
+        "a1fe05f40b02cc79dc3777ff6f90a04ac4de6eac",
+        "d67aa3c0542460ba3cdded515681c71495f7136a",
+        "cd0bb969dbdebfe3b8808dc14dba2d1dcefe6dfb",
+        "2bdeba8aaa23f925982897b426328cf55df86fbc",
+        "63b736d1f046ab6f7b082c0326e92f196ecd353f",
+        "2b6bdfe2771b1db83f51c33911eaa4130ff73769",
+        "83fbdc6ea897a61f62182b26733a4036b198a7a4",
+        "1831f3be1632410ca32d2ead28460b65c4b5e4ab",
+        "3118f14dbbdb653e976a994c0afa8c06e258f678",
+        "9c7612e681136fb222f351c0e3981dd0708f8317",
+        "53b0f0db606580dc79ce740de71c15deaa216158",
+        "85d3f5a18076a9067876f460d6454ee9346c1311",
+        "81e33dc801988068cef204a61b4c8e7d51f22fb7",
+        "4c29a8cfa2ae8dc872d790336e32479aa402d791",
+        "46815fc4835670be7a771df002a3e4a417dbd3d5",
+        "af39d558ff5ca71fad662cc1fc7bb2927640751c",
+        "7f33d942f4d20608ac499aee4130c4ceeb2ff917"
+      ],
+      "sample_subjects": [
+        "Fix \"String.startsWith(String)\" NPE when refreshing in eclipse",
+        "Fix NPE with Hikari when DatabaseDriver has null driverClassName",
+        "Fix potential NPE when passing 'null' as params",
+        "Fix possible NPE when moving to snapshots",
+        "Fix potential NPE in GraylogExtendedLogFormatProperties"
+      ],
+      "matched_terms_sample": [
+        "NPE",
+        "null (fix context)"
+      ]
+    },
+    {
+      "id": 0,
+      "label": "following, changes, httptunnelconnectiontests, nullpointerexception, null",
+      "size": 5,
+      "hashes": [
+        "93a24eabb1bbb89b7a5fcdbd9fd6b1feb668174f",
+        "5b4bd617204728c4910e45fde44ac46d0f5672d4",
+        "06eb24557e42a7369c24a584d363f84ada8206cd",
+        "de666219058f9c5a22165a6efdbf63c09d4f2877",
+        "1fc9d38396df499ecdb29d28f5f180441e6a60dd"
+      ],
+      "sample_subjects": [
+        "Fix null customizer checks in HTTP client builders",
+        "Fix possible NullPointerException from getPermission()",
+        "Fix HttpTunnelConnectionTests following changes for null handling",
+        "Fix unsupported null argument",
+        "Fix potential Jetty MalformedURLException"
+      ],
+      "matched_terms_sample": [
+        "null (fix context)",
+        "NullPointerException"
+      ]
+    }
+  ],
+  "noise_hashes": [
+    "27c96d910986c9e282fb0bca767408185371ef44",
+    "55f67c9a522647039fd3294dee5cb83f4888160a",
+    "64a74c3bbb148b8726c5f8e8da8887eff3917df7",
+    "66d1f5cd0bb7324548c9ce0dfc1c34aacf536bcb",
+    "247b7f0842b4b902b6dafae58bf1228e5668f99c",
+    "c4f756daee43f89e0ba832ceac17bac216fc899b",
+    "1f5291cd843a3243f0dc16af11c5a611faaf70e0",
+    "9775d40822c8b1e43d480f13ff1bf231cd0c0eb6",
+    "24ca44dbb422428eddb838b4158616e5720d6355",
+    "0fdd7e18431170e2415dbdbec89a7b7e1ed8b6c6",
+    "780397bd6b3b582de6671490c321170fd3d15a77",
+    "68f42a7c484f5b2c3cbec4b2b146edc88b088533"
+  ],
+  "matched_total": 41,
+  "excluded_count": 2761
+}

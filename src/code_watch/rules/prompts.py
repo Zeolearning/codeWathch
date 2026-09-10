@@ -34,9 +34,51 @@ specific code shapes. Top-level key: `pattern` / `patterns` / `pattern-either` /
        - pattern-not-inside: |
            $RET $M(...) { ... $SPF.setFeature("...", true); ... }
 
-2. TAINT (dataflow) — user input flows to a dangerous sink. Use for injection, XSS, etc.
-   Top-level: `mode: taint` + `pattern-sources` / `pattern-sinks` / `pattern-sanitizers`.
-   Each source/sink is a bare `pattern` or `{patterns: [...], focus-metavariable: $X}`.
+2. TAINT (dataflow) — a tainted VALUE flows to a dangerous sink. Use when the bug is about a \
+value traveling: user input reaching exec/query/URL/File (injection), a nullable/unchecked \
+return being dereferenced, a resource acquired but never released. The engine tracks def-use \
+flow (assignments, arguments, returns, field writes) inside a method; your patterns only \
+decide WHERE to seed, stop, and report taint. Top-level: `mode: taint` + `pattern-sources` \
+/ `pattern-sinks` / `pattern-sanitizers` (+ optional `pattern-propagators` to model a value \
+surviving a specific through-call). Each source/sink/sanitizer is a bare `pattern`, a \
+`pattern-either`, or a `{patterns: [...], focus-metavariable: $X}` formula.
+   Taint example (nullable getter dereferenced without a null guard):
+     rules:
+     - id: ex-taint
+       languages: [java]
+       mode: taint
+       severity: ERROR
+       message: value from a nullable getter is dereferenced without a null guard
+       pattern-sources:
+       - pattern-either:                 # the dangerous ORIGIN — specific APIs only
+         - pattern: getChannel(...)
+         - pattern: $OBJ.getDynamicConfiguration(...)
+       pattern-sinks:
+       - pattern: $X.$M(...)            # any method call ON the tainted value = dereference
+       pattern-sanitizers:
+       - patterns:                       # null-guarded block: uses of the SAME $X
+         - pattern: $X
+         - pattern-inside: |
+             if (<... $X != null ...>) {
+               ...
+             }
+       - pattern-either:                 # Optional wrap cleans the value
+         - pattern: Optional.ofNullable(...)
+         - pattern: java.util.Optional.ofNullable(...)
+   Taint mechanics (each item matters for correctness):
+     - Engine, not patterns, computes the flow: taint survives assignments, argument passing, \
+and branch joins (may-analysis: ANY path carrying taint counts, so joins are conservative).
+     - Analysis is intra-procedural by default; use `pattern-propagators` to model a value \
+flowing through a specific helper call when needed.
+     - `$X` appearing in BOTH a sanitizer's `pattern` and its `pattern-inside` is UNIFIED: the \
+sanitizer covers only uses of the SAME expression the guard checked — a `d != null` guard does \
+NOT sanitize uses of `c`.
+     - `<... $X != null ...>` is the deep-expression ellipsis: it finds the check at ANY nesting \
+depth inside the if condition (`if (ok && c != null)`); bare `...` matches any statements.
+     - Fully-qualified names do NOT match short spellings and vice versa: list BOTH in a \
+`pattern-either` (`Optional.ofNullable(...)` AND `java.util.Optional.ofNullable(...)`).
+     - Sources must be SPECIFIC APIs from the bug (a broad source like `$X.getY()` taints \
+everything and fires everywhere); sinks may stay broad — precision comes from the source list.
 
 Metavariables: `$NAME` (uppercase) matches any AST node; `...` matches any code \
 (0+ statements/args); `$X` bound in one pattern can be referenced in \
@@ -100,8 +142,14 @@ exclusion contract above requires. Correct code must be silent, not just this fi
 - The rule id should be `vul4j-<caseid>-r1` (lowercase, hyphens, e.g. `vul4j-10-r1`).
 - **Always include `languages: [java]`** as a list under the rule. Never omit it.
 - Omit `fix`/`metadata`/`paths`/`options` unless taint mode is required.
-- If the bug is "user input flows to dangerous sink", use `mode: taint`. Otherwise prefer syntactic \
-pattern mode.
+- Choose the mode by the bug's shape. Use `mode: taint` when the defect is a VALUE FLOWING to a \
+dangerous use — external input reaching exec/query/URL/File (injection), a nullable/unchecked \
+return being dereferenced (`$OBJ.getChannel().close()`), a resource acquired but never \
+released (leak). In taint mode: sources = the dangerous ORIGIN (specific APIs from the delta), \
+sinks = the dangerous USE of the value, sanitizers = the FIX's guard CLASS generalized with \
+metavariables (null check, Optional wrap, try-with-resources/close). Otherwise prefer \
+syntactic pattern mode (missing guard around a specific API, wrong comparison, unsafe \
+construction — no value traveling).
 
 ## Inspection tools
 You also have read-only tools (read_file / glob / grep / list_dir / java_symbols / java_index / \

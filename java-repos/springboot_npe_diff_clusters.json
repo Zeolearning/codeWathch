@@ -1,0 +1,176 @@
+{
+  "model": "BAAI/bge-small-en-v1.5",
+  "input_count": 41,
+  "n_clusters": 5,
+  "n_noise": 9,
+  "clusters": [
+    {
+      "id": 1,
+      "label": "string, org, log4j, classpath, class",
+      "size": 7,
+      "hashes": [
+        "cae3a92eadb092bba6e860d57f70cd27bddf55f9",
+        "1831f3be1632410ca32d2ead28460b65c4b5e4ab",
+        "66d1f5cd0bb7324548c9ce0dfc1c34aacf536bcb",
+        "81e33dc801988068cef204a61b4c8e7d51f22fb7",
+        "c4f756daee43f89e0ba832ceac17bac216fc899b",
+        "1f5291cd843a3243f0dc16af11c5a611faaf70e0",
+        "780397bd6b3b582de6671490c321170fd3d15a77"
+      ],
+      "sample_subjects": [
+        "Fix NPE with Hikari when DatabaseDriver has null driverClassName",
+        "Fix NPE when Collection contains unbound children",
+        "Fix expansion of static-locations array",
+        "Fix NPE in url is null and no embedded database is available",
+        "Fix MavenSettings’ handling of profiles activated by a file"
+      ],
+      "matched_terms_sample": [
+        "NPE"
+      ],
+      "files_sample": [
+        "spring-boot-project/spring-boot/src/main/java/org/springframework/boot/jdbc/DataSourceBuilder.java",
+        "spring-boot-project/spring-boot/src/test/java/org/springframework/boot/jdbc/DataSourceBuilderTests.java",
+        "spring-boot-project/spring-boot/src/main/java/org/springframework/boot/context/properties/bind/IndexedElementsBinder.java",
+        "spring-boot-project/spring-boot/src/test/java/org/springframework/boot/context/properties/bind/CollectionBinderTests.java",
+        "spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/web/ResourceProperties.java"
+      ]
+    },
+    {
+      "id": 2,
+      "label": "beanfactory, beanname, resource, bean, getpermission",
+      "size": 7,
+      "hashes": [
+        "5b4bd617204728c4910e45fde44ac46d0f5672d4",
+        "a1fe05f40b02cc79dc3777ff6f90a04ac4de6eac",
+        "2bdeba8aaa23f925982897b426328cf55df86fbc",
+        "3118f14dbbdb653e976a994c0afa8c06e258f678",
+        "46815fc4835670be7a771df002a3e4a417dbd3d5",
+        "9775d40822c8b1e43d480f13ff1bf231cd0c0eb6",
+        "1fc9d38396df499ecdb29d28f5f180441e6a60dd"
+      ],
+      "sample_subjects": [
+        "Fix possible NullPointerException from getPermission()",
+        "Fix NPE in configprops endpoint",
+        "Fix NPE in BeanDefinitionLoader when XML support is disabled",
+        "Fix NPE when OnExpressionCondition is invoked with a null BeanFactory",
+        "Fix potential @AutoConfigureTestDatabase NPE"
+      ],
+      "matched_terms_sample": [
+        "NPE",
+        "NullPointerException",
+        "null pointer"
+      ],
+      "files_sample": [
+        "spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/condition/OnExpressionCondition.java",
+        "spring-boot-project/spring-boot-tools/spring-boot-loader/src/main/java/org/springframework/boot/loader/net/protocol/jar/JarUrlConnection.java",
+        "spring-boot-project/spring-boot-actuator/src/main/java/org/springframework/boot/actuate/context/properties/ConfigurationPropertiesReportEndpoint.java",
+        "spring-boot-project/spring-boot/src/main/java/org/springframework/boot/context/properties/ConfigurationPropertiesBean.java",
+        "spring-boot-project/spring-boot/src/main/java/org/springframework/boot/BeanDefinitionLoader.java"
+      ]
+    },
+    {
+      "id": 4,
+      "label": "container, manager, installedon, customizer, sourceclass",
+      "size": 7,
+      "hashes": [
+        "b7499222b87e493e3ce480fab79913ea9d7982ba",
+        "63b736d1f046ab6f7b082c0326e92f196ecd353f",
+        "2b6bdfe2771b1db83f51c33911eaa4130ff73769",
+        "83fbdc6ea897a61f62182b26733a4036b198a7a4",
+        "9c7612e681136fb222f351c0e3981dd0708f8317",
+        "85d3f5a18076a9067876f460d6454ee9346c1311",
+        "7f33d942f4d20608ac499aee4130c4ceeb2ff917"
+      ],
+      "sample_subjects": [
+        "Fix possible NPE when moving to snapshots",
+        "Fix NPE when waiting for named socket path to become available",
+        "Fix Reactive...Context NPE",
+        "Fix NPE in FlywayEndpoint when migration.installedOn is null",
+        "Fix NPE in WaitStrategy used for test containers"
+      ],
+      "matched_terms_sample": [
+        "NPE"
+      ],
+      "files_sample": [
+        "buildSrc/src/main/java/org/springframework/boot/build/bom/bomr/MoveToSnapshots.java",
+        "spring-boot-project/spring-boot-tools/spring-boot-buildpack-platform/src/main/java/org/springframework/boot/buildpack/platform/socket/NamedPipeSocket.java",
+        "spring-boot-project/spring-boot/src/main/java/org/springframework/boot/web/reactive/context/ReactiveWebServerApplicationContext.java",
+        "spring-boot-project/spring-boot-actuator/src/main/java/org/springframework/boot/actuate/flyway/FlywayEndpoint.java",
+        "spring-boot-project/spring-boot-tools/spring-boot-test-support/src/main/java/org/springframework/boot/testsupport/testcontainers/CassandraContainer.java"
+      ]
+    },
+    {
+      "id": 0,
+      "label": "assert, notnull, original, authors, copyright",
+      "size": 6,
+      "hashes": [
+        "93a24eabb1bbb89b7a5fcdbd9fd6b1feb668174f",
+        "55f67c9a522647039fd3294dee5cb83f4888160a",
+        "5ec099756f0fa3afca79bc2378a281b8202cbcc4",
+        "6ca9f91a8bdbfaea3f4e5c980770d20db85631d3",
+        "cd0bb969dbdebfe3b8808dc14dba2d1dcefe6dfb",
+        "0fdd7e18431170e2415dbdbec89a7b7e1ed8b6c6"
+      ],
+      "sample_subjects": [
+        "Fix null customizer checks in HTTP client builders",
+        "Fix potential null problem in actuator",
+        "Fix potential NPE when passing 'null' as params",
+        "Fix NPE when gracefully shutting down netty",
+        "Fix Potential NPE in TomcatMetricsBinder.findContext()"
+      ],
+      "matched_terms_sample": [
+        "null (fix context)",
+        "NPE"
+      ],
+      "files_sample": [
+        "module/spring-boot-http-client/src/main/java/org/springframework/boot/http/client/AbstractClientHttpRequestFactoryBuilder.java",
+        "module/spring-boot-http-client/src/main/java/org/springframework/boot/http/client/reactive/AbstractClientHttpConnectorBuilder.java",
+        "module/spring-boot-http-client/src/main/java/org/springframework/boot/http/client/reactive/ClientHttpConnectorBuilder.java",
+        "module/spring-boot-http-client/src/main/java/org/springframework/boot/http/client/reactive/HttpComponentsClientHttpConnectorBuilder.java",
+        "module/spring-boot-http-client/src/test/java/org/springframework/boot/http/client/SimpleClientHttpRequestFactoryBuilderTests.java"
+      ]
+    },
+    {
+      "id": 3,
+      "label": "safety, kotlin, url, gradle, config",
+      "size": 5,
+      "hashes": [
+        "27c96d910986c9e282fb0bca767408185371ef44",
+        "d67aa3c0542460ba3cdded515681c71495f7136a",
+        "53b0f0db606580dc79ce740de71c15deaa216158",
+        "af39d558ff5ca71fad662cc1fc7bb2927640751c",
+        "68f42a7c484f5b2c3cbec4b2b146edc88b088533"
+      ],
+      "sample_subjects": [
+        "Fix null safety of Gradle Kotlin scripts with Gradle 9",
+        "Fix null safety in Kotlin examples",
+        "Fix NPE when normalizing client tag URIs",
+        "Fix potential NPE in RedisAutoConfiguration",
+        "Fix null in help output"
+      ],
+      "matched_terms_sample": [
+        "null (fix context)",
+        "NPE"
+      ],
+      "files_sample": [
+        "spring-boot-project/spring-boot-actuator/src/main/java/org/springframework/boot/actuate/metrics/web/client/MetricsClientHttpRequestInterceptor.java",
+        "spring-boot-autoconfigure/src/main/java/org/springframework/boot/autoconfigure/data/redis/RedisAutoConfiguration.java",
+        "spring-cli/src/main/java/org/springframework/cli/SpringCli.java"
+      ]
+    }
+  ],
+  "noise_hashes": [
+    "71f4c3442f52064bb2001fcf5db1b21ba7afc208",
+    "9de517281eb0766068672f62e79246ff06ca3e1f",
+    "7a148747a029bd085da66398d278e475765f0304",
+    "64a74c3bbb148b8726c5f8e8da8887eff3917df7",
+    "247b7f0842b4b902b6dafae58bf1228e5668f99c",
+    "4c29a8cfa2ae8dc872d790336e32479aa402d791",
+    "06eb24557e42a7369c24a584d363f84ada8206cd",
+    "de666219058f9c5a22165a6efdbf63c09d4f2877",
+    "24ca44dbb422428eddb838b4158616e5720d6355"
+  ],
+  "reduction": "umap:384d->10d(n_neighbors=15,seed=42)",
+  "matched_total": 41,
+  "excluded_count": 2761
+}
