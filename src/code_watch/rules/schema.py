@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field
 class Rule(BaseModel):
     """A Semgrep YAML rule generated from a defect analysis."""
 
-    rule_id: str = Field(description="Unique rule id, e.g. vul4j-10-r1")
-    bug_id: str = Field(description="Provenance Vul4J case id, e.g. VUL4J-10")
+    rule_id: str = Field(description="Unique rule id, e.g. dubbo-npe-c6-1-r1")
+    bug_id: str = Field(description="Provenance case id, e.g. dubbo-npe-c6-1")
     language: str = Field(default="java")
     yaml: str = Field(description="Complete Semgrep YAML rule text (rules: [...])")
     message: str = Field(default="", description="Human-readable match message")

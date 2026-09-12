@@ -9,104 +9,89 @@ from rich.panel import Panel
 from rich.table import Table
 
 from code_watch.config import CodeWatchConfig
-from code_watch.dataset.split import load_split, make_split
-from code_watch.dataset.vul4j import resolve_case_ids
-from code_watch.rules.batch import run_batch
-from code_watch.rules.holdout import evaluate_holdout
-from code_watch.rules.metrics import BatchReport
-from code_watch.rules.pipeline import out_prefix_for, run_case_pipeline
+from code_watch.rules.merge import evaluate_generalization, run_cluster_loop
+from code_watch.rules.pipeline import out_prefix_for, run_git_case_pipeline
+from code_watch.workspace import (
+    DEFAULT_WORKSPACE_ROOT,
+    GitCase,
+    clean_cluster,
+    materialize_cluster,
+)
 
 app = typer.Typer(
     name="code-watch",
-    help="Vul4J vulnerability root-cause analysis + Semgrep rule generation",
+    help="Git-mined semgrep rule generation (cluster sampling -> per-case loops -> merge)",
     no_args_is_help=True,
 )
 console = Console()
 
 
-def _resolve(spec: str) -> list[str]:
-    try:
-        ids = resolve_case_ids(spec)
-    except ValueError as e:
-        console.print(f"[red]{e}[/red]")
-        raise typer.Exit(1) from None
-    return ids
-
-
 @app.command()
-def split(
-    cases: str = typer.Option("pov", "--cases", help="Pool spec: 'pov' | 'sb' | 'all' | explicit ids"),
-    ratio: float = typer.Option(0.8, "--ratio", help="Train fraction (0<ratio<1)"),
-    seed: int = typer.Option(42, "--seed", help="RNG seed for reproducibility"),
-    out: str = typer.Option("", "--out", help="Output JSON path (default splits/vul4j-<spec>-seed<seed>.json)"),
-    force: bool = typer.Option(False, "--force", help="Overwrite an existing split file"),
+def materialize(
+    report: str = typer.Option(..., "--report", help="Cluster report JSON, e.g. dataset/clusters/diff/dubbo/npe_clusters.json"),
+    subset: str = typer.Option(..., "--subset", help="Subset JSON, e.g. dataset/subsets/npe/dubbo.json"),
+    diffs: str = typer.Option(..., "--diffs", help="Diffs JSON, e.g. dataset/diffs/dubbo/diffs.json"),
+    repo_path: str = typer.Option(..., "--repo-path", help="Local git repository (full clone)"),
+    cluster: int = typer.Option(None, "--cluster", "-c", help="Cluster id (default: largest)"),
+    k: int = typer.Option(5, "--k", help="Sample size (or all, if the cluster is smaller)"),
+    seed: int = typer.Option(42, "--seed", help="Sampling seed (same report+seed => same cases)"),
+    workspace_root: str = typer.Option(str(DEFAULT_WORKSPACE_ROOT), "--workspace-root"),
 ):
-    """Create a CWE-stratified, project-disjoint-when-possible train/test split."""
-    ids = _resolve(cases)
-    if not out:
-        safe_spec = "".join(ch if ch.isalnum() else "-" for ch in cases)
-        out = f"splits/vul4j-{safe_spec}-seed{seed}.json"
-    if Path(out).exists() and not force:
-        console.print(f"[red]{out} already exists (use --force to overwrite)[/red]")
-        raise typer.Exit(1)
+    """Sample k commits from a cluster and materialize vul/fix workspaces (git archive)."""
+    cases, cluster_id = materialize_cluster(
+        report, subset, diffs, repo_path,
+        cluster_id=cluster, k=k, seed=seed, workspace_root=workspace_root,
+    )
 
-    result = make_split(ids, ratio=ratio, seed=seed, pool=cases)
-    result.save(out)
-
-    table = Table(title=f"Split [bold]{out}[/bold]", show_header=True)
-    table.add_column("CWE", style="bold")
-    table.add_column("train", justify="right")
-    table.add_column("test", justify="right")
-    for cwe, dist in result.meta["cwe_distribution"].items():
-        table.add_row(cwe, str(dist["train"]), str(dist["test"]))
+    table = Table(
+        title=f"cluster {cluster_id} [dim]({cases[0].cluster_label})[/dim] -> {len(cases)} cases",
+        show_header=True,
+    )
+    table.add_column("case_id", style="bold")
+    table.add_column("seq", justify="right")
+    table.add_column("fix", justify="left")
+    table.add_column("files", justify="right")
+    table.add_column("subject")
+    for c in cases:
+        table.add_row(c.case_id, str(c.seq), c.fix_hash[:10], str(len(c.files)), c.subject[:60])
     console.print(table)
-    console.print(Panel(
-        f"total: {result.meta['total']}  ->  train: {len(result.train)}  test: {len(result.test)}\n"
-        f"shared projects (both sides): {', '.join(result.shared_projects) or 'none'}",
-        title="Split Summary", border_style="green",
-    ))
-    console.print(f"[green]Saved:[/green] {out}")
-
-
-def _write_report(
-    evals, errors, report_md: str, report_csv: str,
-) -> BatchReport:
-    report = BatchReport(evals)
-    md = report.to_markdown()
-    if errors:
-        md += "\n\n## Errors\n\n| case | error |\n|---|---|\n"
-        for bid, err in errors:
-            md += f"| {bid} | {err.replace('|', '/')[:200]} |\n"
-    Path(report_md).parent.mkdir(parents=True, exist_ok=True)
-    Path(report_md).write_text(md, encoding="utf-8")
-    Path(report_csv).parent.mkdir(parents=True, exist_ok=True)
-    Path(report_csv).write_text(report.to_csv(), encoding="utf-8")
-    return report
+    console.print(f"[green]workspace:[/green] {cases[0].workspace.parent}")
 
 
 @app.command()
 def run(
-    case: str = typer.Option("VUL4J-10", "--case", "-c", help="Vul4J case id, e.g. VUL4J-10"),
+    case_id: str = typer.Option("", "--case-id", help="Case id, e.g. dubbo-npe-c6-1 (dir under workspace root)"),
+    case_dir: str = typer.Option("", "--case-dir", help="Explicit case directory (overrides --case-id)"),
+    workspace_root: str = typer.Option(str(DEFAULT_WORKSPACE_ROOT), "--workspace-root"),
     refresh_analysis: bool = typer.Option(False, "--refresh-analysis", help="Re-run the analysis agent even if JSON exists"),
-    refresh_checkout: bool = typer.Option(False, "--refresh-checkout", help="Force a fresh vul4j checkout"),
     max_attempts: int = typer.Option(3, "--max-attempts", help="Max generate/evaluate attempts (repair loop)"),
 ):
-    """Full case pipeline: analyze (cached) -> deterministic FixDelta -> generate -> evaluate."""
-    console.print(f"[bold]Case pipeline for {case}...[/bold]")
+    """Per-case pipeline: analyze (cached) -> deterministic FixDelta -> generate -> evaluate."""
+    if case_dir:
+        case = GitCase.load(case_dir)
+    elif case_id:
+        # case_id "<repo>-<vtype>-c<cid>-<i>" -> workspace/<repo>-<vtype>-c<cid>/case-<i>
+        prefix, _, idx = case_id.rpartition("-")
+        case = GitCase.load(f"{workspace_root.rstrip('/')}/{prefix}/case-{idx}")
+    else:
+        console.print("[red]need --case-id or --case-dir[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"[bold]Case pipeline for {case.case_id}...[/bold]")
 
     config = CodeWatchConfig.from_env()
     config.apply_env()
 
-    analysis, delta, rule, evaluation = run_case_pipeline(
+    analysis, delta, rule, evaluation = run_git_case_pipeline(
         case, config,
-        refresh_analysis=refresh_analysis, refresh_checkout=refresh_checkout,
+        refresh_analysis=refresh_analysis,
         verbose=True, max_attempts=max_attempts,
     )
 
     console.print()
     console.print(Panel(
         analysis.root_cause,
-        title=f"Root Cause [{case}]",
+        title=f"Root Cause [{case.case_id}]",
         border_style="yellow",
     ))
     console.print()
@@ -123,138 +108,140 @@ def run(
     table.add_row("syntax_ok", str(evaluation.syntax_ok))
     table.add_row("precision", str(evaluation.precision))
     table.add_row("recall", str(evaluation.recall))
-    table.add_row("fired_on_vuln", "\n".join(evaluation.fired_on_buggy[:10]) or "(none)")
+    table.add_row("fired_on_buggy", "\n".join(evaluation.fired_on_buggy[:10]) or "(none)")
     table.add_row("fired_on_fixed", "\n".join(evaluation.fired_on_fixed[:10]) or "(none)")
     table.add_row("expected", "\n".join(evaluation.expected[:10]) or "(none)")
     console.print(table)
 
-    p = out_prefix_for(case)
+    p = out_prefix_for(case.case_id)
     console.print(f"\n[green]Artifacts:[/green]")
-    console.print(f"  output/analysis/{case}.json")
+    console.print(f"  output/analysis/{case.case_id}.json")
     console.print(f"  {p}-fixdelta.json")
     console.print(f"  {p}-rule.json")
     console.print(f"  {p}-eval.json")
 
 
 @app.command()
-def batch(
-    cases: str = typer.Option("pov", "--cases", help="'pov' | 'sb' | 'all' | comma-separated ids/ranges, e.g. 'VUL4J-1,4-10,80-S'"),
-    split_path: str = typer.Option("", "--split", help="Read case ids from a split JSON (overrides --cases)"),
-    role: str = typer.Option("train", "--role", help="Which side of --split to run: 'train' | 'test'"),
-    refresh_analysis: bool = typer.Option(False, "--refresh-analysis", help="Re-run the analysis agent even if JSON exists"),
-    refresh_checkout: bool = typer.Option(False, "--refresh-checkout", help="Force fresh vul4j checkouts"),
-    max_attempts: int = typer.Option(3, "--max-attempts", help="Max generate/evaluate attempts (repair loop)"),
-    skip_existing: bool = typer.Option(
-        True, "--skip-existing/--no-skip-existing",
-        help="Skip cases whose -eval.json already exists",
-    ),
-    retry_failed: bool = typer.Option(
-        False, "--retry-failed",
-        help="With --skip-existing, re-run cases whose previous eval was SYNTAX_ERROR",
-    ),
-    work_root: str = typer.Option(
-        "", "--work-root",
-        help="Directory for temporary checkouts (default: persistent output/checkouts/<case>)",
-    ),
-    keep_work: bool = typer.Option(False, "--keep-work", help="Keep temporary checkout directories"),
-    report_md: str = typer.Option("output/reports/rules-report.md", "--report", help="Report markdown path"),
-    report_csv: str = typer.Option("output/reports/rules-report.csv", "--csv", help="Report CSV path"),
+def clean(
+    cluster_dir: str = typer.Argument(..., help="Cluster workspace dir (name under workspace/ or absolute path); 'all' wipes the root"),
+    workspace_root: str = typer.Option(str(DEFAULT_WORKSPACE_ROOT), "--workspace-root"),
 ):
-    """Run the full pipeline over a batch of cases and write an aggregate report."""
-    if split_path:
-        if role not in ("train", "test"):
-            console.print(f"[red]--role must be 'train' or 'test', got '{role}'[/red]")
-            raise typer.Exit(1)
-        try:
-            ids = list(getattr(load_split(split_path), role))
-        except FileNotFoundError as e:
-            console.print(f"[red]split file not found: {e}[/red]")
-            raise typer.Exit(1) from None
-        console.print(f"[dim]Loaded {len(ids)} '{role}' cases from {split_path}[/dim]")
+    """Delete cluster workspace(s) after the merge stage (trees are regenerable)."""
+    import shutil
+    from pathlib import Path
+    if cluster_dir == "all":
+        shutil.rmtree(Path(workspace_root), ignore_errors=True)
+        console.print(f"[green]removed:[/green] {workspace_root}")
     else:
-        ids = _resolve(cases)
-    console.print(f"[bold]Batch case pipeline: {len(ids)} cases[/bold]")
+        clean_cluster(cluster_dir, workspace_root=workspace_root)
+        console.print(f"[green]removed:[/green] {workspace_root.rstrip('/')}/{cluster_dir}")
+
+
+@app.command()
+def cluster(
+    cluster_dir: str = typer.Argument(..., help="Cluster workspace dir, e.g. workspace/dubbo-npe-c1"),
+    skip_existing: bool = typer.Option(True, "--skip-existing/--no-skip-existing", help="Reload per-case rule+eval from output/ when present"),
+    refresh_analysis: bool = typer.Option(False, "--refresh-analysis", help="Re-run the analysis agent even if JSON exists"),
+    max_attempts: int = typer.Option(3, "--max-attempts", help="Per-case generate/evaluate attempts"),
+    max_rounds: int = typer.Option(3, "--max-rounds", help="Merge feedback rounds"),
+    clean: bool = typer.Option(False, "--clean", help="Remove the cluster workspace after the merge loop"),
+):
+    """Cluster loops: per-case pipelines (cached) -> merge -> re-run gate -> feedback."""
+    console.print(f"[bold]Cluster loops for {cluster_dir}...[/bold]")
 
     config = CodeWatchConfig.from_env()
     config.apply_env()
 
-    evals, errors = run_batch(
-        ids, config,
-        refresh_analysis=refresh_analysis, refresh_checkout=refresh_checkout, verbose=True,
-        max_attempts=max_attempts, skip_existing=skip_existing, retry_failed=retry_failed,
-        work_root=work_root or None, keep_work=keep_work,
+    outcome = run_cluster_loop(
+        cluster_dir, config,
+        skip_existing=skip_existing, refresh_analysis=refresh_analysis,
+        max_attempts=max_attempts, max_rounds=max_rounds, verbose=True, clean=clean,
     )
 
-    report = _write_report(evals, errors, report_md, report_csv)
-
-    console.print()
-    console.print(Panel(
-        f"total: {report.total}  passed: {report.passed}  pass@1: {report.pass_at_1}\n"
-        f"macro precision: {report.macro_precision}  macro recall: {report.macro_recall}\n"
-        f"micro precision: {report.micro_precision}  micro recall: {report.micro_recall}\n"
-        f"errors: {len(errors)}",
-        title="Batch Report",
-        border_style="green" if report.passed else "yellow",
-    ))
-    console.print(f"[green]Report:[/green] {report_md}")
-    console.print(f"[green]CSV:[/green] {report_csv}")
+    covered = set(outcome.plan.covered_cases)
+    table = Table(
+        title=f"Merged rule [bold]{outcome.rule.rule_id}[/bold]  "
+              f"({len(covered)}/{len(outcome.verdicts)} covered, "
+              f"rounds={outcome.rounds}, {'PASS' if outcome.passed else 'FAIL'})",
+        show_header=True,
+    )
+    table.add_column("case")
+    table.add_column("declared")
+    table.add_column("fires on buggy")
+    table.add_column("silent on fixed")
+    table.add_column("bonus")
+    for v in outcome.verdicts:
+        table.add_row(
+            v.case_id,
+            "covered" if v.covered else "excluded",
+            "YES" if v.hit_expected else ("—" if not v.syntax_ok else "no"),
+            "YES" if not v.fired_on_fix else f"NO {v.fired_on_fix[:2]}",
+            "recall" if v.bonus_recall else "",
+        )
+    console.print(table)
+    if outcome.plan.commonality:
+        console.print(Panel(outcome.plan.commonality, title="Commonality", border_style="yellow"))
+    if outcome.failures:
+        console.print(Panel("\n".join(outcome.failures), title="Gate failures", border_style="red"))
+    p = out_prefix_for(outcome.cluster)
+    console.print(f"[green]Artifacts:[/green] {p}-merged-rule.json, {p}-merged-eval.json")
 
 
 @app.command()
-def holdout(
-    train: str = typer.Option("pov", "--train", help="Training case spec (rules loaded from output/)"),
-    test: str = typer.Option("sb", "--test", help="Held-out test case spec"),
-    split_path: str = typer.Option("", "--split", help="Read train+test ids from a split JSON (overrides --train/--test)"),
-    work_root: str = typer.Option(
-        "", "--work-root",
-        help="Directory for temporary checkouts (deleted per case unless --keep-work)",
-    ),
-    keep_work: bool = typer.Option(False, "--keep-work", help="Keep temporary checkout directories"),
-    tolerance: int = typer.Option(3, "--tolerance", help="Line tolerance for 'localized' (hit at bug location)"),
-    near_tolerance: int = typer.Option(10, "--near-tolerance", help="Line tolerance for 'near' (hit within N lines of bug location)"),
-    report_md: str = typer.Option("output/reports/holdout-report.md", "--report", help="Report markdown path"),
-    report_json: str = typer.Option("output/reports/holdout-report.json", "--json", help="Report JSON path"),
+def generalize(
+    rule_path: str = typer.Option(..., "--rule", help="Merged rule JSON, e.g. output/rules/dubbo-npe-c1/dubbo-npe-c1-merged-rule.json"),
+    report: str = typer.Option(..., "--report", help="Cluster report JSON"),
+    subset: str = typer.Option(..., "--subset", help="Subset JSON"),
+    diffs: str = typer.Option(..., "--diffs", help="Diffs JSON"),
+    repo_path: str = typer.Option(..., "--repo-path", help="Local git repository"),
+    cluster: int = typer.Option(None, "--cluster", "-c", help="Cluster id (default: largest)"),
+    workspace_root: str = typer.Option(str(DEFAULT_WORKSPACE_ROOT), "--workspace-root"),
 ):
-    """Evaluate generalization: scan held-out test cases with the merged training rules."""
-    if split_path:
-        try:
-            result = load_split(split_path)
-        except FileNotFoundError as e:
-            console.print(f"[red]split file not found: {e}[/red]")
-            raise typer.Exit(1) from None
-        train_ids, test_ids = list(result.train), list(result.test)
-        console.print(f"[dim]Loaded split {split_path}: {len(train_ids)} train / {len(test_ids)} test[/dim]")
-    else:
-        train_ids = _resolve(train)
-        test_ids = _resolve(test)
+    """Scan the merged rule over the cluster's UNSAMPLED members (泛化测试)."""
+    from code_watch.rules.schema import Rule
 
-    report = evaluate_holdout(
-        train_ids, test_ids,
-        work_root=work_root or None, keep_work=keep_work,
-        tolerance=tolerance, near_tolerance=near_tolerance, verbose=True,
+    rule = Rule.model_validate_json(Path(rule_path).read_text(encoding="utf-8"))
+
+    # 已抽样的 hash 从 workspace 的 case meta 里读
+    cluster_dir = Path(workspace_root) / rule.bug_id
+    sampled = {
+        json.loads((d / "meta.json").read_text(encoding="utf-8"))["fix_hash"]
+        for d in cluster_dir.glob("case-*")
+        if (d / "meta.json").exists()
+    }
+    console.print(f"[bold]Generalization for {rule.rule_id}[/bold] (excluding {len(sampled)} sampled)")
+
+    summary = evaluate_generalization(
+        rule, report, subset, diffs, repo_path,
+        cluster_id=cluster, exclude_hashes=sampled, workspace_root=workspace_root,
     )
 
-    Path(report_md).parent.mkdir(parents=True, exist_ok=True)
-    Path(report_md).write_text(report.to_markdown(), encoding="utf-8")
-    Path(report_json).parent.mkdir(parents=True, exist_ok=True)
-    Path(report_json).write_text(
-        json.dumps(report.to_dict(), indent=2, ensure_ascii=False), encoding="utf-8"
+    table = Table(
+        title=f"Generalization: {summary['recalled']}/{summary['evaluated']} members recalled, "
+              f"FP members: {len(summary['fix_added_fp_members'])}",
+        show_header=True,
     )
+    table.add_column("case")
+    table.add_column("seq", justify="right")
+    table.add_column("buggy命中", justify="right")
+    table.add_column("期望行", justify="right")
+    table.add_column("fix新增FP", justify="right")
+    table.add_column("subject")
+    for d in summary["details"]:
+        if "error" in d:
+            table.add_row(d["case_id"], "-", "ERR", "-", "-", d["error"][:40])
+            continue
+        table.add_row(
+            d["case_id"], str(d["seq"]), str(d["fired_on_buggy"]),
+            f"{len(d['hit_expected_lines'])}/{d['expected_scannable']}",
+            str(len(d["fix_added_fp"])), d["subject"][:40],
+        )
+    console.print(table)
 
-    s = report
-    console.print()
-    console.print(Panel(
-        f"train cases: {len(train_ids)}  rules: {len(s.rule_ids)}"
-        f"  (skipped SYNTAX_ERROR: {len(s.skipped_syntax_error)})\n"
-        f"test cases: {s.total}\n"
-        f"same-file: {sum(1 for v in s.verdicts if v.same_file_rule_ids)}/{s.total}\n"
-        f"near (≤{near_tolerance} lines): {sum(1 for v in s.verdicts if v.near_rule_ids)}/{s.total}\n"
-        f"localized (≤{tolerance} lines): {sum(1 for v in s.verdicts if v.localized_rule_ids)}/{s.total}",
-        title="Holdout Report",
-        border_style="green" if s.detected else "yellow",
-    ))
-    console.print(f"[green]Report:[/green] {report_md}")
-    console.print(f"[green]JSON:[/green] {report_json}")
+    out = Path(f"output/rules/{rule.bug_id}/generalization.json")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    console.print(f"[green]Report:[/green] {out}")
 
 
 if __name__ == "__main__":

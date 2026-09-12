@@ -1,0 +1,221 @@
+{
+  "cluster": "dubbo-npe-c1",
+  "passed": true,
+  "rounds": 1,
+  "failures": [],
+  "plan": {
+    "covered_cases": [
+      "dubbo-npe-c1-4",
+      "dubbo-npe-c1-1",
+      "dubbo-npe-c1-3",
+      "dubbo-npe-c1-5"
+    ],
+    "excluded_cases": [
+      {
+        "case_id": "dubbo-npe-c1-2",
+        "reason": "dubbo-npe-c1-2 fixes the inverse defect shape: its buggy code carries an over-restrictive `key != null` guard that suppresses cache read/populate and defeats caching (the fix removes a null check), whereas dubbo-npe-c1-4 is an unconditional null-field dereference causing a NullPointerException (the fix adds a null check); a harmful present guard and a missing guard cannot be folded into a single invariant.",
+        "folded_at_step": 1
+      }
+    ],
+    "commonality": "A possibly-null value - a URL component field 'urlAddress', a nullable getServiceInfo()/getValidServiceInfo() lookup result, URL username/password credentials missing from a truncated 'user:password@' userinfo segment, or an invocation attachment such as the service path - is used without a null guard and throws a NullPointerException; the fix adds a null/empty check or fallback before use.",
+    "rule_id": "dubbo-npe-c1-merged",
+    "message": "A possibly-null value (URL component field 'urlAddress', a getServiceInfo()/getValidServiceInfo() lookup result, URL username/password credentials, or a possibly-null invocation attachment such as the service path) is used without a null guard, which can throw a NullPointerException. The fix adds a null/empty check or a fallback before the value is used.",
+    "severity": "ERROR",
+    "mode": "pattern",
+    "rule_yaml": "rules:\n  - id: dubbo-npe-c1-r1\n    languages:\n      - java\n    severity: ERROR\n    message: >-\n      A possibly-null value is used without a null guard, which can throw a\n      NullPointerException. This covers (1) the URL component field\n      'urlAddress', left null by the no-arg constructor chain (URL() /\n      ServiceConfigURL() / URLBuilder()); (2) the result of the nullable\n      getServiceInfo() / getValidServiceInfo() lookups, which return null when\n      no matching ServiceInfo exists; (3) URL username/password credentials\n      populated only from the inline 'user:password@' userinfo segment, which\n      stay null when that segment is absent or the URL body was truncated at\n      '#'; and (4) a possibly-null invocation attachment (e.g. the service\n      path) that is fed into the service-key/cache-key builder without being\n      validated, so a null ends up as a ConcurrentHashMap key and raises a\n      misleading NullPointerException. In every case the fix adds a null/empty\n      check (or a fallback) before the value is used, e.g. if (x == null) return\n      ...; if (x != null) { ... }; x == null ? ... : x.method(); or populating x\n      from the parameters map.\n    paths:\n      exclude:\n        - \"**/src/test/**\"\n        - \"**/test/**\"\n    patterns:\n      - pattern-either:\n          # (a) nullable URL component field 'urlAddress' dereferenced (dubbo-npe-c1-4)\n          - patterns:\n              - pattern-either:\n                  - pattern: |\n                      $T $V = urlAddress.$M(...);\n                      return $R($V);\n                  - pattern: |\n                      return urlAddress.$M(...);\n              - pattern-not-inside: |\n                  if (<... urlAddress == null ...>) {\n                    ...\n                  }\n                  ...\n              - pattern-not-inside: |\n                  if (<... null == urlAddress ...>) {\n                    ...\n                  }\n                  ...\n              - pattern-not-inside: |\n                  if (<... urlAddress != null ...>) {\n                    ...\n                  }\n              - pattern-not-inside: |\n                  if (<... null != urlAddress ...>) {\n                    ...\n                  }\n              - pattern-not-inside: |\n                  urlAddress == null ? $A : $B\n              - pattern-not-inside: |\n                  null == urlAddress ? $A : $B\n              - pattern-not-inside: |\n                  urlAddress != null ? $A : $B\n              - pattern-not-inside: |\n                  null != urlAddress ? $A : $B\n              - pattern-not-inside: |\n                  if (...) {\n                    ...\n                  }\n          # (b) nullable service-info lookup result dereferenced directly (dubbo-npe-c1-1)\n          - pattern-either:\n              - pattern: getServiceInfo(...).$M(...)\n              - pattern: getValidServiceInfo(...).$M(...)\n          # (c) nullable lookup stored in a local then dereferenced\n          - patterns:\n              - pattern-inside: |\n                  $TYPE $SI = $LOOKUP(...);\n                  ...\n              - metavariable-regex:\n                  metavariable: $LOOKUP\n                  regex: \"(getServiceInfo|getValidServiceInfo)$\"\n              - pattern: $SI.$M(...)\n              - pattern-not-inside: |\n                  if (<... $SI == null ...>) {\n                    ...\n                  }\n                  ...\n              - pattern-not-inside: |\n                  if (<... null == $SI ...>) {\n                    ...\n                  }\n                  ...\n              - pattern-not-inside: |\n                  if (<... $SI != null ...>) {\n                    ...\n                  }\n              - pattern-not-inside: |\n                  if (<... null != $SI ...>) {\n                    ...\n                  }\n              - pattern-not-inside: |\n                  $SI == null ? $A : $SI.$M(...)\n              - pattern-not-inside: |\n                  null == $SI ? $A : $SI.$M(...)\n              - pattern-not-inside: |\n                  $SI != null ? $SI.$M(...) : $A\n              - pattern-not-inside: |\n                  null != $SI ? $SI.$M(...) : $A\n          # (d) URL username/password taken only from the inline\n          # 'user:password@' userinfo segment, so they stay null when that\n          # segment is missing or the body was truncated at '#' (dubbo-npe-c1-3)\n          - patterns:\n              - pattern-either:\n                  - pattern: $BODY.indexOf('#')\n                  - patterns:\n                      - pattern: $STAR = $PWD_IDX + 1;\n                      - pattern-inside: |\n                          if ($PWD_IDX > 0) {\n                            ...\n                          }\n              - pattern-inside: |\n                  URL $M(...) {\n                    ...\n                  }\n              - pattern-not-inside: |\n                  $RET $M(...) {\n                    ...\n                    if (<... $CRED == null ...>) {\n                      ...\n                    }\n                    ...\n                  }\n              - pattern-not-inside: |\n                  $RET $M(...) {\n                    ...\n                    if (<... null == $CRED ...>) {\n                      ...\n                    }\n                    ...\n                  }\n              - pattern-not-inside: |\n                  $RET $M(...) {\n                    ...\n                    if (<... $CRED != null ...>) {\n                      ...\n                    }\n                    ...\n                  }\n              - pattern-not-inside: |\n                  $RET $M(...) {\n                    ...\n                    if (<... null != $CRED ...>) {\n                      ...\n                    }\n                    ...\n                  }\n              - pattern-not-inside: |\n                  $RET $M(...) {\n                    ...\n                    if (<... isEmpty($CRED) ...>) {\n                      ...\n                    }\n                    ...\n                  }\n              - pattern-not-inside: |\n                  $RET $M(...) {\n                    ...\n                    if (<... isNotEmpty($CRED) ...>) {\n                      ...\n                    }\n                    ...\n                  }\n              - pattern-not-inside: |\n                  $RET $M(...) {\n                    ...\n                    if (<... $CRED.isEmpty() ...>) {\n                      ...\n                    }\n                    ...\n                  }\n              - pattern-not-inside: |\n                  $CRED == null ? $A : $B\n              - pattern-not-inside: |\n                  null == $CRED ? $A : $B\n              - pattern-not-inside: |\n                  $CRED != null ? $A : $B\n              - pattern-not-inside: |\n                  null != $CRED ? $A : $B\n          # (e) possibly-null invocation attachment (e.g. service path) used to\n          # build the service key / cache key without validation (dubbo-npe-c1-5)\n          - patterns:\n              - pattern: String $PATH = (String) $INV.$GETTER($KEY);\n              - metavariable-regex:\n                  metavariable: $GETTER\n                  regex: (?i).*attachment.*\n              - pattern-inside: |\n                  $RET $M(...) {\n                    ...\n                    $T $SK = serviceKey(..., $PATH, ...);\n                    ...\n                  }\n              - pattern-not-inside: |\n                  if (<... $PATH == null ...>) {\n                    ...\n                  }\n                  ...\n              - pattern-not-inside: |\n                  if (<... null == $PATH ...>) {\n                    ...\n                  }\n                  ...\n              - pattern-not-inside: |\n                  if (<... $PATH != null ...>) {\n                    ...\n                  }\n              - pattern-not-inside: |\n                  if (<... null != $PATH ...>) {\n                    ...\n                  }\n              - pattern-not-inside: |\n                  $PATH == null ? $A : $B\n              - pattern-not-inside: |\n                  null == $PATH ? $A : $B\n              - pattern-not-inside: |\n                  $PATH != null ? $A : $B\n              - pattern-not-inside: |\n                  null != $PATH ? $A : $B\n              - pattern-not-inside: |\n                  $RET $M(...) {\n                    ...\n                    if ($PATH == null) {\n                      ...\n                    }\n                    ...\n                  }\n"
+  },
+  "verdicts": [
+    {
+      "case_id": "dubbo-npe-c1-1",
+      "covered": true,
+      "syntax_ok": true,
+      "validation_msg": "",
+      "hit_expected": true,
+      "fired_on_buggy": [
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:347",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:356",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:365",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:423",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:433",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:443",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:456",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:461",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:497",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:106",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:149",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:245",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:310",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:347",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:430",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:439",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:444",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:459",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:480",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:497",
+        "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:263"
+      ],
+      "fired_on_fix": [
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:347",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:356",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:365",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:423",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:433",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:443",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:456",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:461",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:497",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:106",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:149",
+        "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:263"
+      ],
+      "fired_on_fix_added": [],
+      "expected": [
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:138",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:148",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:244",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:245",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:309",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:310",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:346",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:347",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:430",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:439",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:444",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:459",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:480",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:497",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:58",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java:26",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java:27",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java:327",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java:337",
+        "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java:338"
+      ],
+      "bonus_recall": false
+    },
+    {
+      "case_id": "dubbo-npe-c1-2",
+      "covered": false,
+      "syntax_ok": true,
+      "validation_msg": "",
+      "hit_expected": false,
+      "fired_on_buggy": [],
+      "fired_on_fix": [],
+      "fired_on_fix_added": [],
+      "expected": [
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:49",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:50",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:51",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:52",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:53",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:54",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:55",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:56",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:57",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:58",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:59",
+        "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:60"
+      ],
+      "bonus_recall": false
+    },
+    {
+      "case_id": "dubbo-npe-c1-3",
+      "covered": true,
+      "syntax_ok": true,
+      "validation_msg": "",
+      "hit_expected": true,
+      "fired_on_buggy": [
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:105",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:148",
+        "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:291"
+      ],
+      "fired_on_fix": [
+        "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:291"
+      ],
+      "fired_on_fix_added": [],
+      "expected": [
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:105",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:106",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:149",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:150",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:20",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:206",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:207",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:21",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:26",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:27",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:45",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:46"
+      ],
+      "bonus_recall": false
+    },
+    {
+      "case_id": "dubbo-npe-c1-4",
+      "covered": true,
+      "syntax_ok": true,
+      "validation_msg": "",
+      "hit_expected": true,
+      "fired_on_buggy": [
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:352",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:361",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:370",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:428",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:438",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:448",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:461",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:466",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:502",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:106",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:149",
+        "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:266"
+      ],
+      "fired_on_fix": [
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:106",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:149",
+        "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:266"
+      ],
+      "fired_on_fix_added": [],
+      "expected": [
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:352",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:353",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:361",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:362",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:370",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:371",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:428",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:429",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:438",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:439",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:448",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:461",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:462",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:466",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:502",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:503"
+      ],
+      "bonus_recall": false
+    },
+    {
+      "case_id": "dubbo-npe-c1-5",
+      "covered": true,
+      "syntax_ok": true,
+      "validation_msg": "",
+      "hit_expected": true,
+      "fired_on_buggy": [
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:105",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:148",
+        "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:292"
+      ],
+      "fired_on_fix": [
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:105",
+        "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:148"
+      ],
+      "fired_on_fix_added": [],
+      "expected": [
+        "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:292",
+        "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:293"
+      ],
+      "bonus_recall": false
+    }
+  ]
+}

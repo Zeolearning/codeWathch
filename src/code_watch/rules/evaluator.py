@@ -5,6 +5,29 @@ from pathlib import Path
 from code_watch.rules.schema import Rule, RuleEvaluation
 from code_watch.rules.semgrep_runner import hits_as_file_colon_lines, scan_tree, validate_rule
 
+# semgrep 1.172 (OCaml v2 targeting) unconditionally skips directories named
+# test/tests while walking a scan root — the builtin default .semgrepignore
+# layer has no override in this build (pysemgrep v1 targeting, which honored a
+# replacing .semgrepignore, is disabled). Expected bug locations inside test
+# files are therefore NOT scanner-visible: filter them out of the oracle here,
+# otherwise those cases can never PASS (false FNs at the gate).
+_TEST_DIR_COMPONENTS = {"test", "tests"}
+
+
+def filter_scannable(locations: list[str]) -> tuple[list[str], list[str]]:
+    """Split expected 'file:line' locations into (scannable, test-only).
+
+    'Scannable' = path with no test/tests directory component (semgrep will
+    actually see those files). Test-only locations are reported separately so
+    callers can degrade the gate honestly instead of counting false FNs.
+    """
+    scannable, test_only = [], []
+    for loc in locations:
+        path = loc.rpartition(":")[0]
+        components = {part.lower() for part in Path(path).parts}
+        (test_only if components & _TEST_DIR_COMPONENTS else scannable).append(loc)
+    return scannable, test_only
+
 
 def _parse_locations(locations: list[str]) -> dict[str, set[int]]:
     """Parse 'file:line' or 'file:start-end' into {file: set(lines)}."""

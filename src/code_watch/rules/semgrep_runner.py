@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import tempfile
 from pathlib import Path
@@ -63,7 +64,11 @@ def scan_tree(rule_yaml: str, target_dir: Path) -> list[dict[str, Any]]:
         rule_path = f.name
     try:
         result = subprocess.run(
-            [_SEMGREP, "scan", "--json", "--config", rule_path, str(target_dir)],
+            # --no-git-ignore: materialized trees (git archive snapshots) carry the
+            # project's .gitignore but have no .git — with git-ignore semantics
+            # active, semgrep would skip EVERY file ("0 files tracked by git").
+            [_SEMGREP, "scan", "--json", "--no-git-ignore",
+             "--config", rule_path, str(target_dir)],
             capture_output=True,
             text=True,
             timeout=_SEMGREP_TIMEOUT,

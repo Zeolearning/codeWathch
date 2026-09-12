@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from code_watch.dataset.schema import CaseInfo
+from code_watch.workspace import GitCase
 
 SYSTEM_PROMPT = """You are Code Watch, a Java vulnerability root-cause analyzer. Two revisions of an \
 open-source project are checked out for you under the repo root: ``vul/`` (the vulnerable \
@@ -73,28 +73,21 @@ WITHOUT the `vul/` prefix — e.g. `src/main/java/.../DiskFileItem.java:340-360`
 """
 
 
-def build_analysis_prompt(case: CaseInfo, patch: str) -> str:
+def build_analysis_prompt(case: GitCase, patch: str) -> str:
     patch_text = patch if patch.strip() else "(not available)"
 
-    pov = ""
-    if case.is_pov and case.failing_tests and case.failing_tests != "-":
-        pov = f"Proof-of-Vulnerability failing tests: {case.failing_tests}\n"
-    elif case.warning and case.warning != "-":
-        pov = f"SpotBugs warning removed by the patch: {case.warning}\n"
+    return f"""Bug fix commit under analysis: {case.case_id}
+Project: {case.repo} (family: {case.vtype}, cluster {case.cluster_id}: {case.cluster_label or 'n/a'})
+Fix subject: {case.subject}
 
-    cve = case.cve_id or "(no CVE assigned)"
-    return f"""Vulnerability: {case.case_id} in {case.repo_slug}
-CVE: {cve}
-CWE: {case.cwe_id} {case.cwe_name}
-{pov}
-Fix patch (vulnerable -> fixed):
+Fix patch (buggy -> fixed):
 ```
 {patch_text}
 ```
 
-Identify the root cause of the vulnerability. Explore `vul/` (vulnerable) and `fix/` \
-(patched) with the available tools: trace the attacker-controlled input to the dangerous \
-effect, and explain the missing/incorrect check the patch adds.
+Identify the root cause of the bug this commit fixes. Explore `vul/` (buggy) and `fix/` \
+(patched) with the available tools: locate the faulty logic, and explain the \
+missing/incorrect check the patch adds.
 
 Root cause format: 'Method fails WHEN condition A AND condition B, OR when condition C.'
-Use AND/OR/NOT. Cite file:line paths relative to the vulnerable tree WITHOUT the vul/ prefix."""
+Use AND/OR/NOT. Cite file:line paths relative to the buggy tree WITHOUT the vul/ prefix."""

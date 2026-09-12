@@ -1,14 +1,83 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
-from code_watch.dataset.vul4j import expected_from_patch
 from code_watch.rules.ast_diff import diff_method_pair
 from code_watch.rules.schema import FixDelta, MethodPair
 from code_watch.tools.java_symbols import PARSER, _parse_file
 
 
-# --- Deterministic FixDelta (Vul4J): patch diff -> method pairs, no agent ---------------
+# --- Deterministic FixDelta: patch diff -> method pairs, no agent ----------------------
+
+_HUNK_RE = re.compile(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
+
+
+def expected_from_patch(patch: str) -> dict[str, set[int]]:
+    """Parse a `git diff -U0` patch into {file: vulnerable-side line numbers}.
+
+    Only the deletion side counts: those are the vulnerable lines the fix
+    touched. Pure-addition hunks record the insertion point (missing-guard
+    location).
+    """
+    expected: dict[str, set[int]] = {}
+    current_file: str | None = None
+    lines = patch.splitlines()
+    for i, line in enumerate(lines):
+        if line.startswith("--- "):
+            p = line[4:].strip()
+            nxt = lines[i + 1] if i + 1 < len(lines) else ""
+            if not nxt.startswith("+++ "):
+                current_file = None
+            elif p.startswith("a/"):
+                current_file = p[2:]
+            else:
+                current_file = None
+        elif line.startswith("@@") and current_file:
+            m = _HUNK_RE.match(line)
+            if not m:
+                continue
+            start = int(m.group(1))
+            count = int(m.group(2) or "1")
+            if count > 0:
+                expected.setdefault(current_file, set()).update(range(start, start + count))
+            elif start > 0:
+                expected.setdefault(current_file, set()).update({start, start + 1})
+            else:
+                expected.setdefault(current_file, set()).add(1)
+    return expected
+
+
+def added_lines_from_patch(patch: str) -> dict[str, set[int]]:
+    """Parse a `git diff -U0` patch into {file: fixed-side (added) line numbers}.
+
+    Dual of expected_from_patch: the newly-written lines of the fix tree — the
+    only places where a hit counts as a false positive of an over-broad rule.
+    """
+    added: dict[str, set[int]] = {}
+    current_file: str | None = None
+    lines = patch.splitlines()
+    for i, line in enumerate(lines):
+        if line.startswith("--- "):
+            p = line[4:].strip()
+            nxt = lines[i + 1] if i + 1 < len(lines) else ""
+            if not nxt.startswith("+++ "):
+                current_file = None
+            elif p.startswith("a/"):
+                current_file = p[2:]
+            else:
+                current_file = None
+        elif line.startswith("@@") and current_file:
+            m = _HUNK_RE.match(line)
+            if not m:
+                continue
+            new_start = int(m.group(3))
+            new_count = int(m.group(4) or "1")
+            if new_count > 0:
+                added.setdefault(current_file, set()).update(
+                    range(new_start, new_start + new_count)
+                )
+    return added
 
 
 def _changed_java_files(patch: str) -> list[str]:

@@ -139,7 +139,7 @@ what the rule MUST match.
 - Use `pattern-not-inside` / `pattern-not` to exclude the `added_in_fixed` nodes (the fix's \
 introduction, e.g. a new guard or a sanitizer call) — generalized to the guard CLASS as the \
 exclusion contract above requires. Correct code must be silent, not just this fixed tree.
-- The rule id should be `vul4j-<caseid>-r1` (lowercase, hyphens, e.g. `vul4j-10-r1`).
+- The rule id should be `<caseid>-r1` (lowercase, hyphens, e.g. `dubbo-npe-c6-1-r1`).
 - **Always include `languages: [java]`** as a list under the rule. Never omit it.
 - Omit `fix`/`metadata`/`paths`/`options` unless taint mode is required.
 - Choose the mode by the bug's shape. Use `mode: taint` when the defect is a VALUE FLOWING to a \
@@ -277,3 +277,80 @@ Expected locations on the buggy tree:
 
 Submit the corrected rule with the `submit_rule` tool. Then stop.
 """
+
+
+# --------------------------------------------------------------------------- #
+# Cluster merge stage — FOLD: accumulate cases one at a time into one rule.
+# --------------------------------------------------------------------------- #
+
+_PATCH_LINES_IN_STEP_PROMPT = 120  # per-case patch truncation
+
+
+def _case_block_for_fold(case, rule, evaluation) -> str:
+    patch_lines = case.patch_src.splitlines()
+    patch = "\n".join(patch_lines[:_PATCH_LINES_IN_STEP_PROMPT])
+    if len(patch_lines) > _PATCH_LINES_IN_STEP_PROMPT:
+        patch += f"\n... ({len(patch_lines) - _PATCH_LINES_IN_STEP_PROMPT} more lines truncated)"
+    return f"""## Next case: {case.case_id} — {case.subject}
+its single-case eval: status={evaluation.status} precision={evaluation.precision} recall={evaluation.recall}
+### its fix patch (buggy -> fixed)
+```diff
+{patch}
+```
+### its validated single-case rule ({rule.rule_id})
+```yaml
+{rule.yaml}
+```"""
+
+
+def build_fold_step_prompt(
+    cluster: str,
+    step_no: int,
+    acc_rule,
+    acc_commonality: str,
+    covered_ids: list[str],
+    excluded: list[dict],
+    next_result,
+) -> str:
+    """Prompt for ONE fold step: absorb `next_result` into the accumulated rule,
+    or exclude the case with a reason."""
+    covered_summaries = "\n".join(f"- {cid}" for cid in covered_ids) or "(none yet)"
+    excluded_summaries = (
+        "\n".join(f"- {e['case_id']}: {e['reason']}" for e in excluded) or "(none)"
+    )
+    next_block = _case_block_for_fold(next_result.case, next_result.rule, next_result.evaluation)
+    return f"""You are building ONE generalized Semgrep rule for bug-fix cluster {cluster} by folding in cases one at a time.
+
+## Current accumulated rule (step {step_no - 1})
+Coverage so far: {covered_ids or '(none — this is the seed case)'}
+Commonality so far: {acc_commonality or '(seed case — write the initial pattern statement)' if acc_commonality else '(seed case)'}
+```yaml
+{acc_rule.yaml}
+```
+Excluded so far: {excluded_summaries}
+
+{next_block}
+
+Decide:
+- "merge" — if this case shares the SAME defect shape (generalize the accumulated rule: metavariables for case-specific names, keep the invariant; the merged rule must STILL fire on every already-covered case's buggy tree and stay silent on all their fixed trees). When you widen the pattern, WIDEN THE GUARD EXCLUSIONS TOO: every null-check/ternary/early-return guard form appearing in the covered cases' FIXED trees must be excluded via pattern-not-inside/pattern-not over the generalized metavariables — firing on any covered case's fixed tree fails the gate.
+- "exclude" — if this case's fix addresses a genuinely different defect shape. Give a real reason; do not exclude merely because generalizing is hard — over-exclusion wastes recall, under-generalization fails the gate.
+
+Respond as JSON with exactly these fields:
+{{
+  "action": "merge",                                  // or "exclude"
+  "rule_yaml": "rules:\n  - ... complete updated Semgrep YAML (languages: [java])",  // merge only
+  "commonality": "one-sentence updated pattern statement",                            // merge only
+  "message": "human-readable match message",                                          // merge only
+  "reason": "one sentence"                            // exclude only
+}}"""
+
+
+def build_fold_retry_prompt(failures: list[str]) -> str:
+    notes = "\n".join(failures)
+    return f"""The rule you produced at this fold step FAILED the final gate:
+
+{notes}
+
+Redo this step. If your previous answer was "merge": the generalization was wrong — either generalize more faithfully to the covered cases' invariants, or switch to "exclude" with a reason. If it was "exclude": reconsider — the exclusion may have been unnecessary.
+
+Respond as JSON with the same schema as before."""

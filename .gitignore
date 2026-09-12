@@ -26,4 +26,9 @@ tmp/
 
 # Test artifacts
 .pytest_cache/
-output/
+
+# Materialized per-case vul/fix workspaces (regenerable, git archive snapshots)
+/workspace/
+
+# Pipeline run artifacts (regenerable; deliverables force-added selectively)
+/output/

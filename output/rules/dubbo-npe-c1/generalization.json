@@ -1,0 +1,55 @@
+{
+  "rule_id": "dubbo-npe-c1-merged",
+  "cluster": 1,
+  "members": 4,
+  "evaluated": 4,
+  "recalled": 0,
+  "recalled_members": [],
+  "fix_added_fp_members": [],
+  "details": [
+    {
+      "case_id": "dubbo-npe-c1-g1",
+      "seq": 60,
+      "fix_hash": "dd94c1561ade672cc253eef79828f6d2daf5a676",
+      "subject": "fix router match condition (#12491)",
+      "expected_scannable": 25,
+      "fired_on_buggy": 3,
+      "hit_expected_lines": [],
+      "fix_added_fp": [],
+      "status": "FP"
+    },
+    {
+      "case_id": "dubbo-npe-c1-g2",
+      "seq": 67,
+      "fix_hash": "738f3ff69a01bcfa9b6b473c8cc51e69a33d54bf",
+      "subject": "Fix proto `package` and ` java_package` issue (#13559)",
+      "expected_scannable": 7,
+      "fired_on_buggy": 3,
+      "hit_expected_lines": [],
+      "fix_added_fp": [],
+      "status": "FP"
+    },
+    {
+      "case_id": "dubbo-npe-c1-g3",
+      "seq": 79,
+      "fix_hash": "d4c1fb37f0543a7db0d845660ca8b07427017708",
+      "subject": "FIX gRPC-related URL object caused a NullPointerException (NPE) (#15157)",
+      "expected_scannable": 8,
+      "fired_on_buggy": 3,
+      "hit_expected_lines": [],
+      "fix_added_fp": [],
+      "status": "FP"
+    },
+    {
+      "case_id": "dubbo-npe-c1-g4",
+      "seq": 82,
+      "fix_hash": "b7d52c39ac35527e331282945f3e8fe20fc0dd61",
+      "subject": "fix: AbstractMetadataReport MemoryOverflow (#15987)",
+      "expected_scannable": 20,
+      "fired_on_buggy": 3,
+      "hit_expected_lines": [],
+      "fix_added_fp": [],
+      "status": "FP"
+    }
+  ]
+}

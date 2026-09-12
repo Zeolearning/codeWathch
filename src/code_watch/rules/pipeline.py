@@ -4,49 +4,38 @@ from pathlib import Path
 
 from langchain_core.messages import BaseMessage
 
-from code_watch.analysis.analyzer import analyze_case
-from code_watch.analysis.batch import analysis_path
+from code_watch.analysis.analyzer import analyze_git_case
 from code_watch.analysis.schema import BugAnalysis
 from code_watch.config import CodeWatchConfig
-from code_watch.dataset.vul4j import checkout_pair, compute_patch, expected_from_patch
-from code_watch.rules.delta import build_fix_delta_from_diff, save_fix_delta
-from code_watch.rules.evaluator import evaluate_rule
+from code_watch.rules.delta import build_fix_delta_from_diff, expected_from_patch, save_fix_delta
+from code_watch.rules.evaluator import filter_scannable, evaluate_rule
 from code_watch.rules.generator import generate_rule, save_rule
 from code_watch.rules.prompts import (
     build_generation_prompt,
     build_round_feedback_prompt,
 )
 from code_watch.rules.schema import FixDelta, Rule, RuleEvaluation
+from code_watch.workspace import GitCase
 
 _STATUS_RANK = {"PASS": 3, "FP": 2, "FN": 1, "SYNTAX_ERROR": 0}
 
 
 def out_prefix_for(case_id: str) -> str:
-    return f"output/rules/vul4j-{case_id}/vul4j-{case_id}"
+    return f"output/rules/{case_id}/{case_id}"
+
+
+def analysis_path(case_id: str) -> Path:
+    return Path(f"output/analysis/{case_id}.json")
 
 
 def load_or_analyze(
-    case_id: str,
+    case: GitCase,
     *,
-    base_dir: str | None = None,
     refresh_analysis: bool = False,
-    refresh_checkout: bool = False,
     verbose: bool = True,
-) -> tuple[BugAnalysis, Path, Path, Path]:
-    """Load a persisted analysis (if any) or run the analysis agent; either way return
-    the dual checkout (parent, vul_dir, fix_dir) for downstream reuse.
-
-    The checkout defaults to the shared cache ``output/checkouts/<case_id>`` so the
-    analysis phase and the rule phase (possibly separate batch runs) reuse one tree.
-    """
-    if base_dir is None:
-        base_dir = f"output/checkouts/{case_id}"
-
-    parent, vul_dir, fix_dir = checkout_pair(
-        case_id, base_dir=base_dir, refresh=refresh_checkout
-    )
-
-    path = analysis_path(case_id)
+) -> BugAnalysis:
+    """Load a persisted analysis (if any) or run the analysis agent on the case workspace."""
+    path = analysis_path(case.case_id)
     analysis: BugAnalysis | None = None
     if path.exists() and not refresh_analysis:
         try:
@@ -56,18 +45,17 @@ def load_or_analyze(
 
     if analysis is None:
         if verbose and path.exists():
-            print(f"[pipe] re-analyzing {case_id} (existing JSON unparseable or --refresh-analysis)", flush=True)
-        analysis, parent, vul_dir, fix_dir = analyze_case(
-            case_id, base_dir=base_dir, refresh=refresh_checkout, verbose=verbose
-        )
+            print(f"[pipe] re-analyzing {case.case_id} (existing JSON unparseable or --refresh-analysis)", flush=True)
+        analysis = analyze_git_case(case, verbose=verbose)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(analysis.model_dump_json(indent=2), encoding="utf-8")
-    elif not analysis.patch_src:
-        # Older/partial JSON: deterministically refresh the patch from the checkout.
-        analysis.patch_src = compute_patch(vul_dir)
+
+    if not analysis.patch_src:
+        # Older/partial JSON: deterministically refresh the patch from the workspace.
+        analysis.patch_src = case.patch_src
         path.write_text(analysis.model_dump_json(indent=2), encoding="utf-8")
 
-    return analysis, parent, vul_dir, fix_dir
+    return analysis
 
 
 def _eval_score(ev: RuleEvaluation) -> tuple[int, float]:
@@ -85,7 +73,11 @@ def _expected_locations(analysis: BugAnalysis) -> list[str]:
         by_file = expected_from_patch(analysis.patch_src)
         locs = sorted(f"{path}:{ln}" for path, lines in by_file.items() for ln in sorted(lines))
         if locs:
-            return locs
+            # test/tests dirs are not scanner-visible in semgrep 1.172 (see
+            # evaluator.filter_scannable) — gate on scannable locations only;
+            # an all-test patch keeps everything rather than gating on nothing.
+            scannable, _test_only = filter_scannable(locs)
+            return scannable or locs
     return list(analysis.affected_files)
 
 
@@ -179,40 +171,38 @@ def _generate_and_refine(
     return rule, evaluation
 
 
-def run_case_pipeline(
-    case_id: str,
+def run_git_case_pipeline(
+    case: GitCase,
     config: CodeWatchConfig | None = None,
     *,
-    base_dir: str | None = None,
     refresh_analysis: bool = False,
-    refresh_checkout: bool = False,
     verbose: bool = True,
     max_attempts: int = 3,
 ) -> tuple[BugAnalysis, FixDelta, Rule, RuleEvaluation]:
-    """Full case pipeline: analyze (cached) -> deterministic FixDelta -> generate/evaluate."""
+    """Full case pipeline on a materialized git case: analyze (cached) ->
+    deterministic FixDelta -> generate/evaluate loop."""
     if config is None:
         config = CodeWatchConfig.from_env()
         config.apply_env()
 
+    case_id = case.case_id
     out_prefix = out_prefix_for(case_id)
     Path(out_prefix).parent.mkdir(parents=True, exist_ok=True)
 
-    analysis, parent, vul_dir, fix_dir = load_or_analyze(
-        case_id, base_dir=base_dir,
-        refresh_analysis=refresh_analysis, refresh_checkout=refresh_checkout,
-        verbose=verbose,
+    analysis = load_or_analyze(
+        case, refresh_analysis=refresh_analysis, verbose=verbose
     )
     if verbose:
         print(f"[pipe] analysis: {len(analysis.patch_src.splitlines())} patch lines, "
               f"root_cause={analysis.root_cause[:80]}...", flush=True)
 
     delta = build_fix_delta_from_diff(
-        vul_dir, fix_dir, analysis.patch_src, case_id=case_id, verbose=verbose
+        str(case.vul_dir), str(case.fix_dir), analysis.patch_src, case_id=case_id, verbose=verbose
     )
     save_fix_delta(delta, f"{out_prefix}-fixdelta.json")
 
     rule, evaluation = _generate_and_refine(
-        delta, analysis, config, str(vul_dir), str(fix_dir), out_prefix,
+        delta, analysis, config, str(case.vul_dir), str(case.fix_dir), out_prefix,
         max_attempts=max_attempts, verbose=verbose,
     )
     if verbose:
