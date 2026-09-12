@@ -1,0 +1,73 @@
+diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java
+index cb98b661cb..ca028aed06 100644
+--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java
++++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java
+@@ -352,2 +352,6 @@ class URL implements Serializable {
+-        URLAddress newURLAddress = urlAddress.setProtocol(protocol);
+-        return returnURL(newURLAddress);
++        if (urlAddress == null) {
++            return new ServiceConfigURL(protocol, getHost(), getPort(), getPath(), getParameters());
++        } else {
++            URLAddress newURLAddress = urlAddress.setProtocol(protocol);
++            return returnURL(newURLAddress);
++        }
+@@ -361,2 +365,6 @@ class URL implements Serializable {
+-        URLAddress newURLAddress = urlAddress.setUsername(username);
+-        return returnURL(newURLAddress);
++        if (urlAddress == null) {
++            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), getPath(), getParameters()).setUsername(username);
++        } else {
++            URLAddress newURLAddress = urlAddress.setUsername(username);
++            return returnURL(newURLAddress);
++        }
+@@ -370,2 +378,6 @@ class URL implements Serializable {
+-        URLAddress newURLAddress = urlAddress.setPassword(password);
+-        return returnURL(newURLAddress);
++        if (urlAddress == null) {
++            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), getPath(), getParameters()).setPassword(password);
++        } else {
++            URLAddress newURLAddress = urlAddress.setPassword(password);
++            return returnURL(newURLAddress);
++        }
+@@ -428,2 +440,6 @@ class URL implements Serializable {
+-        URLAddress newURLAddress = urlAddress.setHost(host);
+-        return returnURL(newURLAddress);
++        if (urlAddress == null) {
++            return new ServiceConfigURL(getProtocol(), host, getPort(), getPath(), getParameters());
++        } else {
++            URLAddress newURLAddress = urlAddress.setHost(host);
++            return returnURL(newURLAddress);
++        }
+@@ -438,2 +454,6 @@ class URL implements Serializable {
+-        URLAddress newURLAddress = urlAddress.setPort(port);
+-        return returnURL(newURLAddress);
++        if (urlAddress == null) {
++            return new ServiceConfigURL(getProtocol(), getHost(), port, getPath(), getParameters());
++        } else {
++            URLAddress newURLAddress = urlAddress.setPort(port);
++            return returnURL(newURLAddress);
++        }
+@@ -448 +468 @@ class URL implements Serializable {
+-        return urlAddress.getAddress();
++        return urlAddress == null ? null : urlAddress.getAddress();
+@@ -461,2 +481,6 @@ class URL implements Serializable {
+-        URLAddress newURLAddress = urlAddress.setAddress(host, port);
+-        return returnURL(newURLAddress);
++        if (urlAddress == null) {
++            return new ServiceConfigURL(getProtocol(), host, port, getPath(), getParameters());
++        } else {
++            URLAddress newURLAddress = urlAddress.setAddress(host, port);
++            return returnURL(newURLAddress);
++        }
+@@ -466 +490 @@ class URL implements Serializable {
+-        return urlAddress.getIp();
++        return urlAddress == null ? null : urlAddress.getIp();
+@@ -502,2 +526,6 @@ class URL implements Serializable {
+-        URLAddress newURLAddress = urlAddress.setPath(path);
+-        return returnURL(newURLAddress);
++        if (urlAddress == null) {
++            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), path, getParameters());
++        } else {
++            URLAddress newURLAddress = urlAddress.setPath(path);
++            return returnURL(newURLAddress);
++        }

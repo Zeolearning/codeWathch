@@ -1,0 +1,39 @@
+{
+  "rule_id": "dubbo-npe-c1-4-r2",
+  "bug_id": "dubbo-npe-c1-4",
+  "syntax_ok": true,
+  "fired_on_buggy": [
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:352",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:361",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:370",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:428",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:438",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:448",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:461",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:466",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:502"
+  ],
+  "fired_on_fixed": [],
+  "expected": [
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:352",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:353",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:361",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:362",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:370",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:371",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:428",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:429",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:438",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:439",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:448",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:461",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:462",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:466",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:502",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:503"
+  ],
+  "precision": 1.0,
+  "recall": 1.0,
+  "status": "PASS",
+  "validation_msg": ""
+}

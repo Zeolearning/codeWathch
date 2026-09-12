@@ -1,0 +1,28 @@
+{
+  "rule_id": "dubbo-npe-c1-3-r2",
+  "bug_id": "dubbo-npe-c1-3",
+  "syntax_ok": true,
+  "fired_on_buggy": [
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:105",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:148"
+  ],
+  "fired_on_fixed": [],
+  "expected": [
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:105",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:106",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:149",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:150",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:20",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:206",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:207",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:21",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:26",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:27",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:45",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java:46"
+  ],
+  "precision": 0.5,
+  "recall": 0.0833,
+  "status": "PASS",
+  "validation_msg": ""
+}

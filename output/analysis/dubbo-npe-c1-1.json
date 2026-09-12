@@ -1,0 +1,77 @@
+{
+  "bug_id": "dubbo-npe-c1-1",
+  "root_cause": "MetadataInfo.getValidServiceInfo returns null when there is neither a protocol-specific ServiceInfo nor a no-protocol ServiceInfo AND InstanceAddressURL and ServiceDiscoveryRegistryDirectory dereference that result without null checks AND URL's protected no-arg and URLAddress/URLParam constructors leave urlParam null, causing NullPointerExceptions.",
+  "affected_files": [
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:136-149",
+    "dubbo-metadata/dubbo-metadata-api/src/main/java/org/apache/dubbo/metadata/MetadataInfo.java:243-252",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:244-245",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:289-310",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:346-347",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:430",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:439",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:444",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:459",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:480",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:497",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java:512-514",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java:337-338"
+  ],
+  "patch_src": "diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java\nindex 2e1eb3a17a..29d9df99a8 100644\n--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java\n+++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java\n@@ -138 +138 @@ class URL implements Serializable {\n-        this.urlParam = null;\n+        this.urlParam = URLParam.parse(new HashMap<>());\n@@ -148 +148 @@ class URL implements Serializable {\n-        this.urlParam = urlParam;\n+        this.urlParam = null == urlParam ? URLParam.parse(new HashMap<>()) : urlParam;\ndiff --git a/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java b/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java\nindex 757f33345e..8e8b2f9424 100644\n--- a/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java\n+++ b/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java\n@@ -58 +58 @@ public class InstanceAddressURL extends URL {\n-    \n+\n@@ -244,0 +245,4 @@ public class InstanceAddressURL extends URL {\n+        if (null == serviceInfo) {\n+            return getParameter(key);\n+        }\n+\n@@ -309,0 +314,4 @@ public class InstanceAddressURL extends URL {\n+        if (null == serviceInfo) {\n+            return false;\n+        }\n+\n@@ -346,0 +355,4 @@ public class InstanceAddressURL extends URL {\n+        if (null == serviceInfo) {\n+            return false;\n+        }\n+\n@@ -430 +442,5 @@ public class InstanceAddressURL extends URL {\n-       getServiceInfo(protocolServiceKey).addParameter(key, value);\n+        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n+        if (null != serviceInfo) {\n+            serviceInfo.addParameter(key, value);\n+        }\n+\n@@ -439 +455,5 @@ public class InstanceAddressURL extends URL {\n-        getServiceInfo(protocolServiceKey).addParameterIfAbsent(key, value);\n+        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n+        if (null != serviceInfo) {\n+            serviceInfo.addParameterIfAbsent(key, value);\n+        }\n+\n@@ -444 +464,5 @@ public class InstanceAddressURL extends URL {\n-        getServiceInfo(protocolServiceKey).addConsumerParams(params);\n+        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n+        if (null != serviceInfo) {\n+            serviceInfo.addConsumerParams(params);\n+        }\n+\n@@ -459 +483,6 @@ public class InstanceAddressURL extends URL {\n-            for (String fullKey : getServiceInfo(protocolServiceKey).getAllParams().keySet()) {\n+            MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n+            if (null == serviceInfo) {\n+                return null;\n+            }\n+\n+            for (String fullKey : serviceInfo.getAllParams().keySet()) {\n@@ -480 +509,3 @@ public class InstanceAddressURL extends URL {\n-        return getServiceInfo(protocolServiceKey).getNumbers();\n+        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n+\n+        return null == serviceInfo ? new ConcurrentHashMap<>() : serviceInfo.getNumbers();\n@@ -497 +528,2 @@ public class InstanceAddressURL extends URL {\n-        return getServiceInfo(protocolServiceKey).getMethodNumbers();\n+        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n+        return null == serviceInfo ? new ConcurrentHashMap<>() : serviceInfo.getMethodNumbers();\ndiff --git a/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java b/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java\nindex 35995f3c45..bfe1b8b383 100644\n--- a/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java\n+++ b/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java\n@@ -26,0 +27 @@ import org.apache.dubbo.common.utils.NetUtils;\n+import org.apache.dubbo.metadata.MetadataInfo;\n@@ -327 +328 @@ public class ServiceDiscoveryRegistryDirectory<T> extends DynamicDirectory<T> {\n-            if(!(oldURL instanceof OverrideInstanceAddressURL && newURL instanceof OverrideInstanceAddressURL)) {\n+            if (!(oldURL instanceof OverrideInstanceAddressURL && newURL instanceof OverrideInstanceAddressURL)) {\n@@ -337,2 +338,6 @@ public class ServiceDiscoveryRegistryDirectory<T> extends DynamicDirectory<T> {\n-        return !oldURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey())\n-            .equals(newURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey()));\n+        MetadataInfo.ServiceInfo oldServiceInfo = oldURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey());\n+        if (null == oldServiceInfo) {\n+            return false;\n+        }\n+\n+        return !oldServiceInfo.equals(newURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey()));\n",
+  "reasoning_trace": [
+    "Located patch target files: URL.java, InstanceAddressURL.java, and ServiceDiscoveryRegistryDirectory.java.",
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java",
+        "offset": 200,
+        "limit": 340
+      },
+      "result": "Read InstanceAddressURL methods 200-539: getServiceInfo at 512-514 returns metadataInfo.getValidServiceInfo(protocolServiceKey); callers at 244-245, 289-310, 346-347, 430, 439, 444, 459, 480, and 497 dereference it without null checks."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-metadata/dubbo-metadata-api/src/main/java/org/apache/dubbo/metadata/MetadataInfo.java",
+        "offset": 215,
+        "limit": 80
+      },
+      "result": "getValidServiceInfo at 243-252 returns null when both getServiceInfo and getNoProtocolServiceInfo return null."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java",
+        "offset": 300,
+        "limit": 60
+      },
+      "result": "urlChanged at 337-338 calls .equals on possibly-null getValidServiceInfo(...)."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+        "offset": 100,
+        "limit": 80
+      },
+      "result": "Protected URL() sets urlParam=null at line 138; URL(URLAddress,URLParam,Map) stores possibly-null urlParam at line 148; base accessors call urlParam. directly."
+    },
+    {
+      "tool": "grep",
+      "args": {
+        "pattern": "urlParam",
+        "include": "URL.java",
+        "subpath": "vul/dubbo-common/src/main/java/org/apache/dubbo/common"
+      },
+      "result": "Confirmed urlParam is used by URL.getParameter/getMethodParameter and other accessors without null guards."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/OverrideInstanceAddressURL.java"
+      },
+      "result": "Subclasses rely on InstanceAddressURL methods; getAnyMethodParameter delegates to the unguarded base call."
+    },
+    "Patch diff confirms the fix adds null guards for serviceInfo in all InstanceAddressURL callers, a null guard in ServiceDiscoveryRegistryDirectory.urlChanged, and non-null urlParam defaults in URL constructors."
+  ],
+  "logical_summary": {}
+}

@@ -1,0 +1,40 @@
+rules:
+  - id: dubbo-npe-c1-5-r1
+    languages: [java]
+    severity: ERROR
+    message: >-
+      A possibly-null value read from an invocation attachment (e.g. the service
+      path) is used to build a service key without first validating it. When the
+      attachment is absent, the null flows into the service-key cache and is used
+      as a ConcurrentHashMap key, raising a misleading NullPointerException
+      instead of a proper RemotingException. Validate/throw when the value is null
+      before using it.
+    patterns:
+      - pattern: String $PATH = (String) $INV.$GETTER($KEY);
+      - metavariable-regex:
+          metavariable: $GETTER
+          regex: (?i).*attachment.*
+      - pattern-inside: |
+          $RET $M(...) {
+            ...
+            $T $SK = serviceKey(..., $PATH, ...);
+            ...
+          }
+      - pattern-not-inside: |
+          $RET $M(...) {
+            ...
+            if ($PATH == null) { ... }
+            ...
+          }
+      - pattern-not-inside: |
+          $RET $M(...) {
+            ...
+            if (null == $PATH) { ... }
+            ...
+          }
+      - pattern-not-inside: |
+          $RET $M(...) {
+            ...
+            if ($PATH != null) { ... }
+            ...
+          }

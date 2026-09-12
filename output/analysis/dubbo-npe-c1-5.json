@@ -1,0 +1,41 @@
+{
+  "bug_id": "dubbo-npe-c1-5",
+  "root_cause": "DubboProtocol.getInvoker() lacks a null check on the PATH_KEY attachment AND when path == null (e.g. because a non-Serializable request parameter causes decode failure) that null flows through ProtocolUtils.serviceKey into GroupServiceKeyCache.getServiceKey() where it is used as a ConcurrentHashMap key, so a misleading NullPointerException is thrown instead of a RemotingException.",
+  "affected_files": [
+    "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:288-310",
+    "dubbo-common/src/main/java/org/apache/dubbo/rpc/support/ProtocolUtils.java:43-50",
+    "dubbo-common/src/main/java/org/apache/dubbo/rpc/support/GroupServiceKeyCache.java:36-41"
+  ],
+  "patch_src": "diff --git a/dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java b/dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java\nindex fda55e5667..562367e93a 100644\n--- a/dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java\n+++ b/dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java\n@@ -292,0 +293,9 @@ public class DubboProtocol extends AbstractProtocol {\n+        if (path == null) {\n+            throw new RemotingException(\n+                    channel,\n+                    \"Service path is missing from the invocation, which indicates the invocation metadata is \"\n+                            + \"missing or corrupted. Possible causes include a request decode failure \"\n+                            + \"(e.g. parameter types that failed to deserialize), an incompatible protocol \"\n+                            + \"version, or a custom codec/invocation implementation that does not set the path, \"\n+                            + \"channel: \" + channel.getRemoteAddress() + \" --> \" + channel.getLocalAddress());\n+        }\ndiff --git a/dubbo-rpc/dubbo-rpc-dubbo/src/test/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocolTest.java b/dubbo-rpc/dubbo-rpc-dubbo/src/test/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocolTest.java\nindex adfb29a10f..4cb386dd54 100644\n--- a/dubbo-rpc/dubbo-rpc-dubbo/src/test/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocolTest.java\n+++ b/dubbo-rpc/dubbo-rpc-dubbo/src/test/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocolTest.java\n@@ -21,0 +22,2 @@ import org.apache.dubbo.common.utils.NetUtils;\n+import org.apache.dubbo.remoting.Channel;\n+import org.apache.dubbo.remoting.RemotingException;\n@@ -40,0 +43 @@ import org.apache.dubbo.rpc.service.EchoService;\n+import java.net.InetSocketAddress;\n@@ -283,0 +287,15 @@ class DubboProtocolTest {\n+    @Test\n+    void testGetInvokerThrowsOnNullPath() {\n+        DubboProtocol dubboProtocol = DubboProtocol.getDubboProtocol();\n+        Channel channel = Mockito.mock(Channel.class);\n+        InetSocketAddress localAddress = new InetSocketAddress(\"127.0.0.1\", 20880);\n+        InetSocketAddress remoteAddress = new InetSocketAddress(\"127.0.0.1\", 12345);\n+        Mockito.when(channel.getLocalAddress()).thenReturn(localAddress);\n+        Mockito.when(channel.getRemoteAddress()).thenReturn(remoteAddress);\n+\n+        Invocation inv = Mockito.mock(Invocation.class);\n+        Mockito.when(inv.getObjectAttachmentWithoutConvert(\"path\")).thenReturn(null);\n+\n+        Assertions.assertThrows(RemotingException.class, () -> dubboProtocol.getInvoker(channel, inv));\n+    }\n+\n",
+  "reasoning_trace": [
+    "Read the vulnerable DubboProtocol.getInvoker() implementation and the patch context.",
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java",
+        "offset": 250,
+        "limit": 120
+      },
+      "result": "Located getInvoker(): path is read from the invocation attachment and later passed into serviceKey without a null guard."
+    },
+    "Confirmed the failing condition: inv.getObjectAttachmentWithoutConvert(PATH_KEY) == null, and that null is used as the serviceName for serviceKey lookup.",
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-common/src/main/java/org/apache/dubbo/rpc/support/ProtocolUtils.java",
+        "offset": 35,
+        "limit": 40
+      },
+      "result": "ProtocolUtils.serviceKey passes serviceName through unchecked to GroupServiceKeyCache."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-common/src/main/java/org/apache/dubbo/rpc/support/GroupServiceKeyCache.java"
+      },
+      "result": "GroupServiceKeyCache.getServiceKey uses serviceName as a key in a ConcurrentHashMap, so a null serviceName causes a raw NullPointerException."
+    },
+    "Concluded the NPE is misleading; the patch adds an explicit path == null check in getInvoker() that throws RemotingException before the map lookup."
+  ],
+  "logical_summary": {}
+}

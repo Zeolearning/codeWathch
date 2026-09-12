@@ -1,0 +1,17 @@
+{
+  "rule_id": "dubbo-npe-c1-2-r2",
+  "bug_id": "dubbo-npe-c1-2",
+  "language": "java",
+  "yaml": "rules:\n  - id: dubbo-npe-c1-2-r1\n    languages: [java]\n    severity: ERROR\n    message: >-\n      Cache read and populate are nested inside a guard that requires the derived\n      cache key to be non-null. When the key is null the cache is neither read nor\n      populated, so execution silently falls through to an uncached invocation and\n      the cache is defeated. A null key is a perfectly valid cache key: consult and\n      populate the cache unconditionally, and guard only on the cache object itself.\n    patterns:\n      - pattern: |\n          if (<... $KEY != null ...>) {\n            ...\n            $CACHE.get($KEY);\n            ...\n            $CACHE.put($KEY, ...);\n            ...\n          }\n      # Equivalent guards that validate the key itself (emptiness / length / size)\n      # make the cache access correct -- do not flag them.\n      - pattern-not-inside: |\n          if (<... $KEY.length() ...>) {\n            ...\n          }\n      - pattern-not-inside: |\n          if (<... $KEY.isEmpty() ...>) {\n            ...\n          }\n      - pattern-not-inside: |\n          if (<... $KEY.size() ...>) {\n            ...\n          }",
+  "message": "Cache read and populate are nested inside a guard that requires the derived cache key to be non-null. When the key is null the cache is neither read nor populated, so execution silently falls through to an uncached invocation and the cache is defeated. A null key is a perfectly valid cache key: consult and populate the cache unconditionally, and guard only on the cache object itself.",
+  "severity": "ERROR",
+  "mode": "pattern",
+  "metadata": {
+    "generated_at": 1789120986.9827,
+    "model": "deepseek-v4-flash",
+    "attempt": 2,
+    "explanation": "Corrected rule submitted and validated.\n\n**What changed**: The original rule matched the \"map-lookup idiom\" — any `if (key != null) { map.get(key); map.put(key, v); }`. That idiom is correct code (it appeared at `RegistryDirectory:471`, `RegistryContainer:235/261` in *both* trees), because there the null check is combined with an **emptiness/length validation** of the key. I added `pattern-not-inside` exclusions for that guard class, written with metavariables (`$KEY.length()`, `$KEY.isEmpty()`, `$KEY.size()`) so *any* equivalent length/emptiness/size test is silenced — not just the literal `> 0` spelling.\n\n**Why it still fires on the bug**: the buggy guard is a *bare* `$KEY != null` (`cache != null && key != null`) with no emptiness/length validation, so the exclusion class does not cover it — the rule keeps firing at `CacheFilter.java:49-59` on the vulnerable tree, and generalizes to any sibling cache-aside block gated on a plain non-null key with no validity test.",
+    "validation_ok": true,
+    "validation_msg": ""
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "bug_id": "dubbo-npe-c1-1",
+  "method_deltas": [
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.registry.client.InstanceAddressURL",
+        "method_signature": "@Override\n    public String getServiceMethodParameter(String protocolServiceKey, String method, String key)",
+        "buggy_source": "    @Override\n    public String getServiceMethodParameter(String protocolServiceKey, String method, String key) {\n        if (consumerParamFirst(key)) {\n            URL consumerUrl = RpcContext.getServiceContext().getConsumerUrl();\n            if (consumerUrl != null) {\n                String v = consumerUrl.getServiceMethodParameter(protocolServiceKey, method, key);\n                if (StringUtils.isNotEmpty(v)) {\n                    return v;\n                }\n            }\n        }\n\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n        String value = serviceInfo.getMethodParameter(method, key, null);\n        if (StringUtils.isNotEmpty(value)) {\n            return value;\n        }\n        return getParameter(key);\n    }",
+        "fixed_source": "    @Override\n    public String getServiceMethodParameter(String protocolServiceKey, String method, String key) {\n        if (consumerParamFirst(key)) {\n            URL consumerUrl = RpcContext.getServiceContext().getConsumerUrl();\n            if (consumerUrl != null) {\n                String v = consumerUrl.getServiceMethodParameter(protocolServiceKey, method, key);\n                if (StringUtils.isNotEmpty(v)) {\n                    return v;\n                }\n            }\n        }\n\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n        if (null == serviceInfo) {\n            return getParameter(key);\n        }\n\n        String value = serviceInfo.getMethodParameter(method, key, null);\n        if (StringUtils.isNotEmpty(value)) {\n            return value;\n        }\n        return getParameter(key);\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "if_statement",
+          "buggy_text": null,
+          "fixed_text": "if (null == serviceInfo) {\n            return getParameter(key);\n        }",
+          "change": "added_in_fixed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.registry.client.InstanceAddressURL",
+        "method_signature": "@Override\n    public boolean hasServiceMethodParameter(String protocolServiceKey, String method, String key)",
+        "buggy_source": "    @Override\n    public boolean hasServiceMethodParameter(String protocolServiceKey, String method, String key) {\n        if (consumerParamFirst(key)) {\n            URL consumerUrl = RpcContext.getServiceContext().getConsumerUrl();\n            if (consumerUrl != null) {\n                if (consumerUrl.hasServiceMethodParameter(protocolServiceKey, method, key)) {\n                    return true;\n                }\n            }\n        }\n\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n\n        if (isEmpty(method)) {\n            String suffix = \".\" + key;\n            for (String fullKey : getParameters().keySet()) {\n                if (fullKey.endsWith(suffix)) {\n                    return true;\n                }\n            }\n            return false;\n        }\n        if (isEmpty(key)) {\n            String prefix = method + \".\";\n            for (String fullKey : getParameters().keySet()) {\n                if (fullKey.startsWith(prefix)) {\n                    return true;\n                }\n            }\n            return false;\n        }\n\n        return serviceInfo.hasMethodParameter(method, key);\n    }",
+        "fixed_source": "    @Override\n    public boolean hasServiceMethodParameter(String protocolServiceKey, String method, String key) {\n        if (consumerParamFirst(key)) {\n            URL consumerUrl = RpcContext.getServiceContext().getConsumerUrl();\n            if (consumerUrl != null) {\n                if (consumerUrl.hasServiceMethodParameter(protocolServiceKey, method, key)) {\n                    return true;\n                }\n            }\n        }\n\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n\n        if (isEmpty(method)) {\n            String suffix = \".\" + key;\n            for (String fullKey : getParameters().keySet()) {\n                if (fullKey.endsWith(suffix)) {\n                    return true;\n                }\n            }\n            return false;\n        }\n        if (isEmpty(key)) {\n            String prefix = method + \".\";\n            for (String fullKey : getParameters().keySet()) {\n                if (fullKey.startsWith(prefix)) {\n                    return true;\n                }\n            }\n            return false;\n        }\n\n        if (null == serviceInfo) {\n            return false;\n        }\n\n        return serviceInfo.hasMethodParameter(method, key);\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "if_statement",
+          "buggy_text": null,
+          "fixed_text": "if (null == serviceInfo) {\n            return false;\n        }",
+          "change": "added_in_fixed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.registry.client.InstanceAddressURL",
+        "method_signature": "@Override\n    public boolean hasServiceMethodParameter(String protocolServiceKey, String method)",
+        "buggy_source": "    @Override\n    public boolean hasServiceMethodParameter(String protocolServiceKey, String method) {\n        URL consumerUrl = RpcContext.getServiceContext().getConsumerUrl();\n        if (consumerUrl != null) {\n            if (consumerUrl.hasServiceMethodParameter(protocolServiceKey, method)) {\n                return true;\n            }\n        }\n\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n        return serviceInfo.hasMethodParameter(method);\n    }",
+        "fixed_source": "    @Override\n    public boolean hasServiceMethodParameter(String protocolServiceKey, String method) {\n        URL consumerUrl = RpcContext.getServiceContext().getConsumerUrl();\n        if (consumerUrl != null) {\n            if (consumerUrl.hasServiceMethodParameter(protocolServiceKey, method)) {\n                return true;\n            }\n        }\n\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n        if (null == serviceInfo) {\n            return false;\n        }\n\n        return serviceInfo.hasMethodParameter(method);\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "if_statement",
+          "buggy_text": null,
+          "fixed_text": "if (null == serviceInfo) {\n            return false;\n        }",
+          "change": "added_in_fixed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.registry.client.InstanceAddressURL",
+        "method_signature": "public URL addServiceParameter(String protocolServiceKey, String key, String value)",
+        "buggy_source": "    public URL addServiceParameter(String protocolServiceKey, String key, String value) {\n        if (isEmpty(key) || isEmpty(value)) {\n            return this;\n        }\n\n       getServiceInfo(protocolServiceKey).addParameter(key, value);\n        return this;\n    }",
+        "fixed_source": "    public URL addServiceParameter(String protocolServiceKey, String key, String value) {\n        if (isEmpty(key) || isEmpty(value)) {\n            return this;\n        }\n\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n        if (null != serviceInfo) {\n            serviceInfo.addParameter(key, value);\n        }\n\n        return this;\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "expression_statement",
+          "buggy_text": "getServiceInfo(protocolServiceKey).addParameter(key, value);",
+          "fixed_text": "MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);",
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.registry.client.InstanceAddressURL",
+        "method_signature": "public URL addServiceParameterIfAbsent(String protocolServiceKey, String key, String value)",
+        "buggy_source": "    public URL addServiceParameterIfAbsent(String protocolServiceKey, String key, String value) {\n        if (isEmpty(key) || isEmpty(value)) {\n            return this;\n        }\n\n        getServiceInfo(protocolServiceKey).addParameterIfAbsent(key, value);\n        return this;\n    }",
+        "fixed_source": "    public URL addServiceParameterIfAbsent(String protocolServiceKey, String key, String value) {\n        if (isEmpty(key) || isEmpty(value)) {\n            return this;\n        }\n\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n        if (null != serviceInfo) {\n            serviceInfo.addParameterIfAbsent(key, value);\n        }\n\n        return this;\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "expression_statement",
+          "buggy_text": "getServiceInfo(protocolServiceKey).addParameterIfAbsent(key, value);",
+          "fixed_text": "MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);",
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.registry.client.InstanceAddressURL",
+        "method_signature": "public URL addConsumerParams(String protocolServiceKey, Map<String, String> params)",
+        "buggy_source": "    public URL addConsumerParams(String protocolServiceKey, Map<String, String> params) {\n        getServiceInfo(protocolServiceKey).addConsumerParams(params);\n        return this;\n    }",
+        "fixed_source": "    public URL addConsumerParams(String protocolServiceKey, Map<String, String> params) {\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n        if (null != serviceInfo) {\n            serviceInfo.addConsumerParams(params);\n        }\n\n        return this;\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "expression_statement",
+          "buggy_text": "getServiceInfo(protocolServiceKey).addConsumerParams(params);",
+          "fixed_text": "MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);",
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.registry.client.InstanceAddressURL",
+        "method_signature": "@Override\n    public String getAnyMethodParameter(String key)",
+        "buggy_source": "    @Override\n    public String getAnyMethodParameter(String key) {\n        String suffix = \".\" + key;\n        String protocolServiceKey = getProtocolServiceKey();\n        if (StringUtils.isNotEmpty(protocolServiceKey)) {\n            for (String fullKey : getServiceInfo(protocolServiceKey).getAllParams().keySet()) {\n                if (fullKey.endsWith(suffix)) {\n                    return getParameter(fullKey);\n                }\n            }\n        }\n        return null;\n    }",
+        "fixed_source": "    @Override\n    public String getAnyMethodParameter(String key) {\n        String suffix = \".\" + key;\n        String protocolServiceKey = getProtocolServiceKey();\n        if (StringUtils.isNotEmpty(protocolServiceKey)) {\n            MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n            if (null == serviceInfo) {\n                return null;\n            }\n\n            for (String fullKey : serviceInfo.getAllParams().keySet()) {\n                if (fullKey.endsWith(suffix)) {\n                    return getParameter(fullKey);\n                }\n            }\n        }\n        return null;\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "if_statement",
+          "buggy_text": "if (StringUtils.isNotEmpty(protocolServiceKey)) {\n            for (String fullKey : getServiceInfo(protocolServiceKey).getAllParams().keySet()) {\n                if (fullKey.endsWith(suffix)) {\n                    return getParameter(fullKey);\n                }\n            }\n        }",
+          "fixed_text": "if (StringUtils.isNotEmpty(protocolServiceKey)) {\n            MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n            if (null == serviceInfo) {\n                return null;\n            }\n\n            for (String fullKey : serviceInfo.getAllParams().keySet()) {\n                if (fullKey.endsWith(suffix)) {\n                    return getParameter(fullKey);\n                }\n            }\n        }",
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.registry.client.InstanceAddressURL",
+        "method_signature": "@Override\n    protected Map<String, Number> getServiceNumbers(String protocolServiceKey)",
+        "buggy_source": "    @Override\n    protected Map<String, Number> getServiceNumbers(String protocolServiceKey) {\n        return getServiceInfo(protocolServiceKey).getNumbers();\n    }",
+        "fixed_source": "    @Override\n    protected Map<String, Number> getServiceNumbers(String protocolServiceKey) {\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n\n        return null == serviceInfo ? new ConcurrentHashMap<>() : serviceInfo.getNumbers();\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return getServiceInfo(protocolServiceKey).getNumbers();",
+          "fixed_text": "MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);",
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.registry.client.InstanceAddressURL",
+        "method_signature": "@Override\n    protected Map<String, Map<String, Number>> getServiceMethodNumbers(String protocolServiceKey)",
+        "buggy_source": "    @Override\n    protected Map<String, Map<String, Number>> getServiceMethodNumbers(String protocolServiceKey) {\n        return getServiceInfo(protocolServiceKey).getMethodNumbers();\n    }",
+        "fixed_source": "    @Override\n    protected Map<String, Map<String, Number>> getServiceMethodNumbers(String protocolServiceKey) {\n        MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);\n        return null == serviceInfo ? new ConcurrentHashMap<>() : serviceInfo.getMethodNumbers();\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return getServiceInfo(protocolServiceKey).getMethodNumbers();",
+          "fixed_text": "MetadataInfo.ServiceInfo serviceInfo = getServiceInfo(protocolServiceKey);",
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.registry.client.ServiceDiscoveryRegistryDirectory",
+        "method_signature": "private boolean urlChanged(Invoker<T> invoker, InstanceAddressURL newURL)",
+        "buggy_source": "    private boolean urlChanged(Invoker<T> invoker, InstanceAddressURL newURL) {\n        InstanceAddressURL oldURL = (InstanceAddressURL) invoker.getUrl();\n\n        if (!newURL.getInstance().equals(oldURL.getInstance())) {\n            return true;\n        }\n\n        if (oldURL instanceof OverrideInstanceAddressURL || newURL instanceof OverrideInstanceAddressURL) {\n            if(!(oldURL instanceof OverrideInstanceAddressURL && newURL instanceof OverrideInstanceAddressURL)) {\n                // sub-class changed\n                return true;\n            } else {\n                if (!((OverrideInstanceAddressURL) oldURL).getOverrideParams().equals(((OverrideInstanceAddressURL) newURL).getOverrideParams())) {\n                    return true;\n                }\n            }\n        }\n\n        return !oldURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey())\n            .equals(newURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey()));\n    }",
+        "fixed_source": "    private boolean urlChanged(Invoker<T> invoker, InstanceAddressURL newURL) {\n        InstanceAddressURL oldURL = (InstanceAddressURL) invoker.getUrl();\n\n        if (!newURL.getInstance().equals(oldURL.getInstance())) {\n            return true;\n        }\n\n        if (oldURL instanceof OverrideInstanceAddressURL || newURL instanceof OverrideInstanceAddressURL) {\n            if (!(oldURL instanceof OverrideInstanceAddressURL && newURL instanceof OverrideInstanceAddressURL)) {\n                // sub-class changed\n                return true;\n            } else {\n                if (!((OverrideInstanceAddressURL) oldURL).getOverrideParams().equals(((OverrideInstanceAddressURL) newURL).getOverrideParams())) {\n                    return true;\n                }\n            }\n        }\n\n        MetadataInfo.ServiceInfo oldServiceInfo = oldURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey());\n        if (null == oldServiceInfo) {\n            return false;\n        }\n\n        return !oldServiceInfo.equals(newURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey()));\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "if_statement",
+          "buggy_text": "if (oldURL instanceof OverrideInstanceAddressURL || newURL instanceof OverrideInstanceAddressURL) {\n            if(!(oldURL instanceof OverrideInstanceAddressURL && newURL instanceof OverrideInstanceAddressURL)) {\n                // sub-class changed\n                return true;\n            } else {\n                if (!((OverrideInstanceAddressURL) oldURL).getOverrideParams().equals(((OverrideInstanceAddressURL) newURL).getOverrideParams())) {\n                    return true;\n                }\n            }\n        }",
+          "fixed_text": "if (oldURL instanceof OverrideInstanceAddressURL || newURL instanceof OverrideInstanceAddressURL) {\n            if (!(oldURL instanceof OverrideInstanceAddressURL && newURL instanceof OverrideInstanceAddressURL)) {\n                // sub-class changed\n                return true;\n            } else {\n                if (!((OverrideInstanceAddressURL) oldURL).getOverrideParams().equals(((OverrideInstanceAddressURL) newURL).getOverrideParams())) {\n                    return true;\n                }\n            }\n        }",
+          "change": "changed"
+        },
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return !oldURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey())\n            .equals(newURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey()));",
+          "fixed_text": "MetadataInfo.ServiceInfo oldServiceInfo = oldURL.getMetadataInfo().getValidServiceInfo(getConsumerUrl().getProtocolServiceKey());",
+          "change": "changed"
+        }
+      ]
+    }
+  ]
+}

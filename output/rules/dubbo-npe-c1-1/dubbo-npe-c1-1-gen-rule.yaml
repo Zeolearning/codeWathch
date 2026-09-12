@@ -1,0 +1,60 @@
+rules:
+  - id: dubbo-npe-c1-1-r1
+    languages:
+      - java
+    severity: ERROR
+    message: >-
+      The result of a nullable service-info lookup (getServiceInfo() /
+      getValidServiceInfo()) is dereferenced without a null check. These lookups
+      return null when no matching ServiceInfo exists, so the dereference can
+      throw a NullPointerException. Guard the value before using it, e.g.
+      if (serviceInfo == null) return ...; / if (serviceInfo != null) { ... } /
+      serviceInfo == null ? ... : serviceInfo.method().
+    paths:
+      exclude:
+        - "**/src/test/**"
+        - "**/test/**"
+    patterns:
+      - pattern-either:
+          # (1) the nullable lookup result is dereferenced directly
+          - pattern: getServiceInfo(...).$M(...)
+          - pattern: getValidServiceInfo(...).$M(...)
+          # (2) the nullable lookup result is stored in a local and then
+          #     dereferenced without a null guard
+          - patterns:
+              - pattern-inside: |
+                  $TYPE $SI = $LOOKUP(...);
+                  ...
+              - metavariable-regex:
+                  metavariable: $LOOKUP
+                  regex: "(getServiceInfo|getValidServiceInfo)$"
+              - pattern: $SI.$M(...)
+              # --- equivalent null-guard classes (any spelling) silence it ---
+              - pattern-not-inside: |
+                  if (<... null == $SI ...>) {
+                      ...
+                  }
+                  ...
+              - pattern-not-inside: |
+                  if (<... $SI == null ...>) {
+                      ...
+                  }
+                  ...
+              - pattern-not-inside: |
+                  if (<... null == $SI ...>) return $X;
+                  ...
+              - pattern-not-inside: |
+                  if (<... $SI == null ...>) return $X;
+                  ...
+              - pattern-not-inside: |
+                  if (<... null != $SI ...>) {
+                      ...
+                  }
+              - pattern-not-inside: |
+                  if (<... $SI != null ...>) {
+                      ...
+                  }
+              - pattern-not-inside: "null == $SI ? $A : $SI.$M(...)"
+              - pattern-not-inside: "$SI == null ? $A : $SI.$M(...)"
+              - pattern-not-inside: "null != $SI ? $SI.$M(...) : $A"
+              - pattern-not-inside: "$SI != null ? $SI.$M(...) : $A"

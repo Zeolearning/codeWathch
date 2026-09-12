@@ -1,0 +1,17 @@
+{
+  "rule_id": "dubbo-npe-c1-5-r1",
+  "bug_id": "dubbo-npe-c1-5",
+  "syntax_ok": true,
+  "fired_on_buggy": [
+    "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:292"
+  ],
+  "fired_on_fixed": [],
+  "expected": [
+    "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:292",
+    "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java:293"
+  ],
+  "precision": 1.0,
+  "recall": 0.5,
+  "status": "PASS",
+  "validation_msg": ""
+}

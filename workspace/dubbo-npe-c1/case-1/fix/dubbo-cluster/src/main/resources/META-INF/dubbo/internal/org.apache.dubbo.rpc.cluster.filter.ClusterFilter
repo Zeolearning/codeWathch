@@ -1,0 +1,2 @@
+consumercontext=org.apache.dubbo.rpc.cluster.filter.support.ConsumerContextFilter
+router-snapshot=org.apache.dubbo.rpc.cluster.router.RouterSnapshotFilter

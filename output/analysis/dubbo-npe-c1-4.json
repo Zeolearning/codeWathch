@@ -1,0 +1,102 @@
+{
+  "bug_id": "dubbo-npe-c1-4",
+  "root_cause": "The instance field 'urlAddress' is null whenever a URL is created through the no-arg constructor chain (URL() AND ServiceConfigURL() AND URLBuilder), AND the methods setProtocol/setUsername/setPassword/setHost/setPort/setAddress/setPath AND getAddress/getIp dereference 'urlAddress' without a null check, so invoking any of them on such an instance throws NullPointerException.",
+  "affected_files": [
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:136-140",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:351-354",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:360-363",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:369-372",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:427-430",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:437-440",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:447-449",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:451-463",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:465-467",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java:501-504",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/url/component/ServiceConfigURL.java:32-34",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLBuilder.java:31",
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URLBuilder.java:52-62"
+  ],
+  "patch_src": "diff --git a/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java b/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java\nindex cb98b661cb..ca028aed06 100644\n--- a/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java\n+++ b/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java\n@@ -352,2 +352,6 @@ class URL implements Serializable {\n-        URLAddress newURLAddress = urlAddress.setProtocol(protocol);\n-        return returnURL(newURLAddress);\n+        if (urlAddress == null) {\n+            return new ServiceConfigURL(protocol, getHost(), getPort(), getPath(), getParameters());\n+        } else {\n+            URLAddress newURLAddress = urlAddress.setProtocol(protocol);\n+            return returnURL(newURLAddress);\n+        }\n@@ -361,2 +365,6 @@ class URL implements Serializable {\n-        URLAddress newURLAddress = urlAddress.setUsername(username);\n-        return returnURL(newURLAddress);\n+        if (urlAddress == null) {\n+            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), getPath(), getParameters()).setUsername(username);\n+        } else {\n+            URLAddress newURLAddress = urlAddress.setUsername(username);\n+            return returnURL(newURLAddress);\n+        }\n@@ -370,2 +378,6 @@ class URL implements Serializable {\n-        URLAddress newURLAddress = urlAddress.setPassword(password);\n-        return returnURL(newURLAddress);\n+        if (urlAddress == null) {\n+            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), getPath(), getParameters()).setPassword(password);\n+        } else {\n+            URLAddress newURLAddress = urlAddress.setPassword(password);\n+            return returnURL(newURLAddress);\n+        }\n@@ -428,2 +440,6 @@ class URL implements Serializable {\n-        URLAddress newURLAddress = urlAddress.setHost(host);\n-        return returnURL(newURLAddress);\n+        if (urlAddress == null) {\n+            return new ServiceConfigURL(getProtocol(), host, getPort(), getPath(), getParameters());\n+        } else {\n+            URLAddress newURLAddress = urlAddress.setHost(host);\n+            return returnURL(newURLAddress);\n+        }\n@@ -438,2 +454,6 @@ class URL implements Serializable {\n-        URLAddress newURLAddress = urlAddress.setPort(port);\n-        return returnURL(newURLAddress);\n+        if (urlAddress == null) {\n+            return new ServiceConfigURL(getProtocol(), getHost(), port, getPath(), getParameters());\n+        } else {\n+            URLAddress newURLAddress = urlAddress.setPort(port);\n+            return returnURL(newURLAddress);\n+        }\n@@ -448 +468 @@ class URL implements Serializable {\n-        return urlAddress.getAddress();\n+        return urlAddress == null ? null : urlAddress.getAddress();\n@@ -461,2 +481,6 @@ class URL implements Serializable {\n-        URLAddress newURLAddress = urlAddress.setAddress(host, port);\n-        return returnURL(newURLAddress);\n+        if (urlAddress == null) {\n+            return new ServiceConfigURL(getProtocol(), host, port, getPath(), getParameters());\n+        } else {\n+            URLAddress newURLAddress = urlAddress.setAddress(host, port);\n+            return returnURL(newURLAddress);\n+        }\n@@ -466 +490 @@ class URL implements Serializable {\n-        return urlAddress.getIp();\n+        return urlAddress == null ? null : urlAddress.getIp();\n@@ -502,2 +526,6 @@ class URL implements Serializable {\n-        URLAddress newURLAddress = urlAddress.setPath(path);\n-        return returnURL(newURLAddress);\n+        if (urlAddress == null) {\n+            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), path, getParameters());\n+        } else {\n+            URLAddress newURLAddress = urlAddress.setPath(path);\n+            return returnURL(newURLAddress);\n+        }\n",
+  "reasoning_trace": [
+    {
+      "tool": "glob",
+      "args": {
+        "pattern": "**/URL.java",
+        "subpath": "vul"
+      },
+      "result": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java\nvul/dubbo-compatible/src/main/java/com/alibaba/dubbo/common/URL.java"
+    },
+    {
+      "tool": "java_symbols",
+      "args": {
+        "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java"
+      },
+      "result": "Located all fields and methods; 'urlAddress' is declared as 'private final URLAddress' at line 121."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+        "offset": 114,
+        "limit": 120
+      },
+      "result": "The protected no-arg constructor at lines 136-140 sets this.urlAddress = null; every other constructor assigns a PathURLAddress."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+        "offset": 330,
+        "limit": 200
+      },
+      "result": "getProtocol/getUsername/getPassword/getHost/getPort/getPath already guard 'urlAddress == null' (lines 348, 357, 366, 424, 434, 498), but getAddress (448) and getIp (466) do NOT, and setProtocol (352), setUsername (361), setPassword (370), setHost (428), setPort (438), setAddress (461), setPath (502) call urlAddress.setX(...) directly."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/ServiceConfigURL.java"
+      },
+      "result": "The public no-arg constructor at lines 32-34 calls super(), inheriting the null urlAddress state; attribute mutations go through newURL/getUrlAddress()."
+    },
+    {
+      "tool": "java_symbols",
+      "args": {
+        "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URLBuilder.java"
+      },
+      "result": "URLBuilder declared at line 31 as a final class extending ServiceConfigURL."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URLBuilder.java",
+        "limit": 160
+      },
+      "result": "URLBuilder extends ServiceConfigURL and its no-arg/arg constructors chain to the no-arg super, so any URLBuilder instance also has urlAddress == null."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "fix/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+        "offset": 349,
+        "limit": 30
+      },
+      "result": "The patch replaces the direct urlAddress dereference with 'if (urlAddress == null) { return new ServiceConfigURL(...); }', confirming the missing null check on urlAddress is the fault."
+    },
+    {
+      "tool": "grep",
+      "args": {
+        "pattern": "urlAddress == null|urlAddress\\.set|urlAddress\\.get",
+        "subpath": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java"
+      },
+      "result": "Confirmed exactly which methods dereference the field without a guard (lines 352, 361, 370, 428, 438, 448, 461, 466, 502) and which methods already guard it."
+    },
+    {
+      "tool": "grep",
+      "args": {
+        "pattern": "new ServiceConfigURL\\(|new URL\\(\\)"
+      },
+      "result": "253+ matches, showing the no-arg constructor path is reachable in production code such as URLBuilder and ad-hoc ServiceConfigURL construction."
+    }
+  ],
+  "logical_summary": {}
+}

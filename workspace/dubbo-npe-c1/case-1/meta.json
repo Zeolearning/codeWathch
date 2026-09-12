@@ -1,0 +1,17 @@
+{
+  "case_id": "dubbo-npe-c1-1",
+  "repo": "dubbo",
+  "vtype": "npe",
+  "cluster_id": 1,
+  "cluster_label": "urladdress, usejavapackageaspath, path, serviceinfo, ismatch",
+  "seq": 37,
+  "fix_hash": "29b761c3c75b4325c0ae72dc1b427042510a1f63",
+  "parent_hash": "768a69e8eb0e8be893e8f68a702a009cb5f07002",
+  "subject": "fix for issue 10303 (#10306)",
+  "files": [
+    "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java",
+    "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/ServiceDiscoveryRegistryDirectory.java"
+  ],
+  "commit_date": "2022-07-12T13:35:19+08:00"
+}

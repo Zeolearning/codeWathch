@@ -1,0 +1,191 @@
+{
+  "bug_id": "dubbo-npe-c1-4",
+  "method_deltas": [
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.common.URL",
+        "method_signature": "public URL setProtocol(String protocol)",
+        "buggy_source": "    public URL setProtocol(String protocol) {\n        URLAddress newURLAddress = urlAddress.setProtocol(protocol);\n        return returnURL(newURLAddress);\n    }",
+        "fixed_source": "    public URL setProtocol(String protocol) {\n        if (urlAddress == null) {\n            return new ServiceConfigURL(protocol, getHost(), getPort(), getPath(), getParameters());\n        } else {\n            URLAddress newURLAddress = urlAddress.setProtocol(protocol);\n            return returnURL(newURLAddress);\n        }\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "local_variable_declaration",
+          "buggy_text": "URLAddress newURLAddress = urlAddress.setProtocol(protocol);",
+          "fixed_text": "if (urlAddress == null) {\n            return new ServiceConfigURL(protocol, getHost(), getPort(), getPath(), getParameters());\n        } else {\n            URLAddress newURLAddress = urlAddress.setProtocol(protocol);\n            return returnURL(newURLAddress);\n        }",
+          "change": "changed"
+        },
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return returnURL(newURLAddress);",
+          "fixed_text": null,
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.common.URL",
+        "method_signature": "public URL setUsername(String username)",
+        "buggy_source": "    public URL setUsername(String username) {\n        URLAddress newURLAddress = urlAddress.setUsername(username);\n        return returnURL(newURLAddress);\n    }",
+        "fixed_source": "    public URL setUsername(String username) {\n        if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), getPath(), getParameters()).setUsername(username);\n        } else {\n            URLAddress newURLAddress = urlAddress.setUsername(username);\n            return returnURL(newURLAddress);\n        }\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "local_variable_declaration",
+          "buggy_text": "URLAddress newURLAddress = urlAddress.setUsername(username);",
+          "fixed_text": "if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), getPath(), getParameters()).setUsername(username);\n        } else {\n            URLAddress newURLAddress = urlAddress.setUsername(username);\n            return returnURL(newURLAddress);\n        }",
+          "change": "changed"
+        },
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return returnURL(newURLAddress);",
+          "fixed_text": null,
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.common.URL",
+        "method_signature": "public URL setPassword(String password)",
+        "buggy_source": "    public URL setPassword(String password) {\n        URLAddress newURLAddress = urlAddress.setPassword(password);\n        return returnURL(newURLAddress);\n    }",
+        "fixed_source": "    public URL setPassword(String password) {\n        if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), getPath(), getParameters()).setPassword(password);\n        } else {\n            URLAddress newURLAddress = urlAddress.setPassword(password);\n            return returnURL(newURLAddress);\n        }\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "local_variable_declaration",
+          "buggy_text": "URLAddress newURLAddress = urlAddress.setPassword(password);",
+          "fixed_text": "if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), getPath(), getParameters()).setPassword(password);\n        } else {\n            URLAddress newURLAddress = urlAddress.setPassword(password);\n            return returnURL(newURLAddress);\n        }",
+          "change": "changed"
+        },
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return returnURL(newURLAddress);",
+          "fixed_text": null,
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.common.URL",
+        "method_signature": "public URL setHost(String host)",
+        "buggy_source": "    public URL setHost(String host) {\n        URLAddress newURLAddress = urlAddress.setHost(host);\n        return returnURL(newURLAddress);\n    }",
+        "fixed_source": "    public URL setHost(String host) {\n        if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), host, getPort(), getPath(), getParameters());\n        } else {\n            URLAddress newURLAddress = urlAddress.setHost(host);\n            return returnURL(newURLAddress);\n        }\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "local_variable_declaration",
+          "buggy_text": "URLAddress newURLAddress = urlAddress.setHost(host);",
+          "fixed_text": "if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), host, getPort(), getPath(), getParameters());\n        } else {\n            URLAddress newURLAddress = urlAddress.setHost(host);\n            return returnURL(newURLAddress);\n        }",
+          "change": "changed"
+        },
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return returnURL(newURLAddress);",
+          "fixed_text": null,
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.common.URL",
+        "method_signature": "public URL setPort(int port)",
+        "buggy_source": "    public URL setPort(int port) {\n        URLAddress newURLAddress = urlAddress.setPort(port);\n        return returnURL(newURLAddress);\n    }",
+        "fixed_source": "    public URL setPort(int port) {\n        if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), getHost(), port, getPath(), getParameters());\n        } else {\n            URLAddress newURLAddress = urlAddress.setPort(port);\n            return returnURL(newURLAddress);\n        }\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "local_variable_declaration",
+          "buggy_text": "URLAddress newURLAddress = urlAddress.setPort(port);",
+          "fixed_text": "if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), getHost(), port, getPath(), getParameters());\n        } else {\n            URLAddress newURLAddress = urlAddress.setPort(port);\n            return returnURL(newURLAddress);\n        }",
+          "change": "changed"
+        },
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return returnURL(newURLAddress);",
+          "fixed_text": null,
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.common.URL",
+        "method_signature": "public String getAddress()",
+        "buggy_source": "    public String getAddress() {\n        return urlAddress.getAddress();\n    }",
+        "fixed_source": "    public String getAddress() {\n        return urlAddress == null ? null : urlAddress.getAddress();\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return urlAddress.getAddress();",
+          "fixed_text": "return urlAddress == null ? null : urlAddress.getAddress();",
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.common.URL",
+        "method_signature": "public URL setAddress(String address)",
+        "buggy_source": "    public URL setAddress(String address) {\n        int i = address.lastIndexOf(':');\n        String host;\n        int port = this.getPort();\n        if (i >= 0) {\n            host = address.substring(0, i);\n            port = Integer.parseInt(address.substring(i + 1));\n        } else {\n            host = address;\n        }\n        URLAddress newURLAddress = urlAddress.setAddress(host, port);\n        return returnURL(newURLAddress);\n    }",
+        "fixed_source": "    public URL setAddress(String address) {\n        int i = address.lastIndexOf(':');\n        String host;\n        int port = this.getPort();\n        if (i >= 0) {\n            host = address.substring(0, i);\n            port = Integer.parseInt(address.substring(i + 1));\n        } else {\n            host = address;\n        }\n        if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), host, port, getPath(), getParameters());\n        } else {\n            URLAddress newURLAddress = urlAddress.setAddress(host, port);\n            return returnURL(newURLAddress);\n        }\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "local_variable_declaration",
+          "buggy_text": "URLAddress newURLAddress = urlAddress.setAddress(host, port);",
+          "fixed_text": "if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), host, port, getPath(), getParameters());\n        } else {\n            URLAddress newURLAddress = urlAddress.setAddress(host, port);\n            return returnURL(newURLAddress);\n        }",
+          "change": "changed"
+        },
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return returnURL(newURLAddress);",
+          "fixed_text": null,
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.common.URL",
+        "method_signature": "public String getIp()",
+        "buggy_source": "    public String getIp() {\n        return urlAddress.getIp();\n    }",
+        "fixed_source": "    public String getIp() {\n        return urlAddress == null ? null : urlAddress.getIp();\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return urlAddress.getIp();",
+          "fixed_text": "return urlAddress == null ? null : urlAddress.getIp();",
+          "change": "changed"
+        }
+      ]
+    },
+    {
+      "method": {
+        "fqcn": "org.apache.dubbo.common.URL",
+        "method_signature": "public URL setPath(String path)",
+        "buggy_source": "    public URL setPath(String path) {\n        URLAddress newURLAddress = urlAddress.setPath(path);\n        return returnURL(newURLAddress);\n    }",
+        "fixed_source": "    public URL setPath(String path) {\n        if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), path, getParameters());\n        } else {\n            URLAddress newURLAddress = urlAddress.setPath(path);\n            return returnURL(newURLAddress);\n        }\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "local_variable_declaration",
+          "buggy_text": "URLAddress newURLAddress = urlAddress.setPath(path);",
+          "fixed_text": "if (urlAddress == null) {\n            return new ServiceConfigURL(getProtocol(), getHost(), getPort(), path, getParameters());\n        } else {\n            URLAddress newURLAddress = urlAddress.setPath(path);\n            return returnURL(newURLAddress);\n        }",
+          "change": "changed"
+        },
+        {
+          "node_type": "return_statement",
+          "buggy_text": "return returnURL(newURLAddress);",
+          "fixed_text": null,
+          "change": "changed"
+        }
+      ]
+    }
+  ]
+}

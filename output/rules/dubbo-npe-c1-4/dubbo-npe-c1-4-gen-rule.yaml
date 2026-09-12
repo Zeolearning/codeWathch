@@ -1,0 +1,33 @@
+rules:
+  - id: dubbo-npe-c1-4-r1
+    languages:
+      - java
+    severity: ERROR
+    message: >-
+      The URL component field 'urlAddress' is dereferenced unconditionally.
+      'urlAddress' is left null by the no-arg constructor chain (URL() /
+      ServiceConfigURL() / URLBuilder()), so this delegation throws a
+      NullPointerException. Guard the field with a null check before using it.
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $T $V = urlAddress.$M(...);
+              return $R($V);
+          - pattern: |
+              return urlAddress.$M(...);
+      - pattern-not-inside: |
+          if (<... urlAddress == null ...>) {
+            ...
+          }
+      - pattern-not-inside: |
+          if (<... urlAddress != null ...>) {
+            ...
+          }
+      - pattern-not-inside: |
+          urlAddress == null ? $A : $B
+      - pattern-not-inside: |
+          urlAddress != null ? $A : $B
+      - pattern-not-inside: |
+          if (...) {
+            ...
+          }

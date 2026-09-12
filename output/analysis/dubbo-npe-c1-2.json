@@ -1,0 +1,86 @@
+{
+  "bug_id": "dubbo-npe-c1-2",
+  "root_cause": "The cache is bypassed because cache.get(key) and cache.put(key, result.getValue()) are executed only when the argument-derived key is NOT null, so when that key is null the cache is NOT read AND NOT populated and execution falls through to an uncached invoker.invoke(invocation).",
+  "affected_files": [
+    "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:49",
+    "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java:47-62",
+    "dubbo-common/src/main/java/com/alibaba/dubbo/common/utils/StringUtils.java:411-429"
+  ],
+  "patch_src": "diff --git a/dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java b/dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java\nindex b0c5960443..8b43473979 100644\n--- a/dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java\n+++ b/dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java\n@@ -49,10 +49,3 @@ public class CacheFilter implements Filter {\n-                if (cache != null && key != null) {\n-                    Object value = cache.get(key);\n-                    if (value != null) {\n-                        return new RpcResult(value);\n-                    }\n-                    Result result = invoker.invoke(invocation);\n-                    if (!result.hasException()) {\n-                        cache.put(key, result.getValue());\n-                    }\n-                    return result;\n+                Object value = cache.get(key);\n+                if (value != null) {\n+                    return new RpcResult(value);\n@@ -59,0 +53,5 @@ public class CacheFilter implements Filter {\n+                Result result = invoker.invoke(invocation);\n+                if (!result.hasException()) {\n+                    cache.put(key, result.getValue());\n+                }\n+                return result;\ndiff --git a/dubbo-filter/dubbo-filter-cache/src/test/java/com/alibaba/dubbo/cache/filter/CacheFilterTest.java b/dubbo-filter/dubbo-filter-cache/src/test/java/com/alibaba/dubbo/cache/filter/CacheFilterTest.java\nnew file mode 100644\nindex 0000000000..53766d1ddb\n--- /dev/null\n+++ b/dubbo-filter/dubbo-filter-cache/src/test/java/com/alibaba/dubbo/cache/filter/CacheFilterTest.java\n@@ -0,0 +1,68 @@\n+package com.alibaba.dubbo.cache.filter;\n+\n+import com.alibaba.dubbo.cache.support.lru.LruCacheFactory;\n+import com.alibaba.dubbo.common.URL;\n+import com.alibaba.dubbo.rpc.Invoker;\n+import com.alibaba.dubbo.rpc.RpcInvocation;\n+import com.alibaba.dubbo.rpc.RpcResult;\n+\n+import org.easymock.EasyMock;\n+import org.junit.Assert;\n+import org.junit.BeforeClass;\n+import org.junit.Test;\n+\n+/**\n+ * @author ken.lj\n+ * @date 2018/1/19\n+ */\n+public class CacheFilterTest {\n+    private static RpcInvocation invocation;\n+    static CacheFilter cacheFilter = new CacheFilter();\n+    static Invoker<?> invoker = EasyMock.createMock(Invoker.class);\n+    static Invoker<?> invoker1 = EasyMock.createMock(Invoker.class);\n+    static Invoker<?> invoker2 = EasyMock.createMock(Invoker.class);\n+\n+    @BeforeClass\n+    public static void setUp() {\n+        invocation = new RpcInvocation();\n+        cacheFilter.setCacheFactory(new LruCacheFactory());\n+\n+        URL url = URL.valueOf(\"test://test:11/test?cache=lru\");\n+\n+        EasyMock.expect(invoker.invoke(invocation)).andReturn(new RpcResult(new String(\"value\"))).anyTimes();\n+        EasyMock.expect(invoker.getUrl()).andReturn(url).anyTimes();\n+        EasyMock.replay(invoker);\n+\n+        EasyMock.expect(invoker1.invoke(invocation)).andReturn(new RpcResult(new String(\"value1\"))).anyTimes();\n+        EasyMock.expect(invoker1.getUrl()).andReturn(url).anyTimes();\n+        EasyMock.replay(invoker1);\n+\n+        EasyMock.expect(invoker2.invoke(invocation)).andReturn(new RpcResult(new String(\"value2\"))).anyTimes();\n+        EasyMock.expect(invoker2.getUrl()).andReturn(url).anyTimes();\n+        EasyMock.replay(invoker2);\n+    }\n+\n+    @Test\n+    public void test_No_Arg_Method() {\n+        invocation.setMethodName(\"echo\");\n+        invocation.setParameterTypes(new Class<?>[]{});\n+        invocation.setArguments(new Object[]{});\n+\n+        cacheFilter.invoke(invoker, invocation);\n+        RpcResult rpcResult1 = (RpcResult) cacheFilter.invoke(invoker1, invocation);\n+        RpcResult rpcResult2 = (RpcResult) cacheFilter.invoke(invoker2, invocation);\n+        Assert.assertEquals(rpcResult1.getValue(), rpcResult2.getValue());\n+    }\n+\n+    @Test\n+    public void test_Args_Method() {\n+        invocation.setMethodName(\"echo1\");\n+        invocation.setParameterTypes(new Class<?>[]{String.class});\n+        invocation.setArguments(new Object[]{\"arg1\"});\n+\n+        cacheFilter.invoke(invoker, invocation);\n+        RpcResult rpcResult1 = (RpcResult) cacheFilter.invoke(invoker1, invocation);\n+        RpcResult rpcResult2 = (RpcResult) cacheFilter.invoke(invoker2, invocation);\n+        Assert.assertEquals(rpcResult1.getValue(), rpcResult2.getValue());\n+    }\n+}\n",
+  "reasoning_trace": [
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java"
+      },
+      "result": "Lines 44-63 show the cache lookup/populate logic nested under `if (cache != null)` at line 47 and, erroneously, under `if (cache != null && key != null)` at line 49; when the inner guard is false the method falls through to the uncached `return invoker.invoke(invocation)` at line 62."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "fix/dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java"
+      },
+      "result": "The fixed version is identical except the inner guard is removed: `cache.get(key)`, the null-value check, `cache.put(key, result.getValue())`, and `return result` now execute unconditionally inside the outer `if (cache != null)`."
+    },
+    {
+      "tool": "bash",
+      "args": {
+        "command": "diff -u vul/dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java fix/dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java"
+      },
+      "result": "The only source change is deletion of the `if (cache != null && key != null)` wrapper and re-indentation of the cache read/populate code, confirming the guard is the faulty logic."
+    },
+    {
+      "tool": "grep",
+      "args": {
+        "pattern": "toArgumentString",
+        "subpath": "vul/dubbo-common"
+      },
+      "result": "`StringUtils.toArgumentString(Object[])` is the helper that produces the cache key from invocation arguments."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-common/src/main/java/com/alibaba/dubbo/common/utils/StringUtils.java",
+        "offset": 405,
+        "limit": 26
+      },
+      "result": "`toArgumentString` at lines 411-429 builds the key from `invocation.getArguments()`; the returned key can be null for no-argument/null-argument invocations."
+    },
+    {
+      "tool": "bash",
+      "args": {
+        "command": "diff -rq vul fix"
+      },
+      "result": "Only `CacheFilter.java` and the new `CacheFilterTest.java` differ, so no other source file contributes to the fault."
+    },
+    {
+      "tool": "java_index",
+      "args": {
+        "name_contains": "Cache",
+        "file_contains": "vul/dubbo-filter/dubbo-filter-cache"
+      },
+      "result": "`LruCache` and `JCache` are keyed by the string produced from the invocation arguments, matching the get/put path affected by the guard."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/support/lru/LruCache.java",
+        "offset": 28,
+        "limit": 20
+      },
+      "result": "LruCache is backed by a map that accepts the argument-derived key used by CacheFilter."
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "vul/dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/support/jcache/JCache.java",
+        "offset": 35,
+        "limit": 45
+      },
+      "result": "JCache delegates get/put to the configured javax.cache.Cache using the same argument-derived key."
+    },
+    "The patch adds CacheFilterTest.java with test_No_Arg_Method and test_Args_Method, which assert that repeated invocations through different invokers return the same cached value, directly exercising the get/put path that the guard can short-circuit.",
+    "Conclusion: the incorrect `key != null` condition suppresses cache usage for invocations whose argument-derived key is null; the fix removes this condition so the cache is always read and, on a miss, populated."
+  ],
+  "logical_summary": {}
+}

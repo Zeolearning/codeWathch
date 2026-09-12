@@ -1,0 +1,33 @@
+rules:
+  - id: dubbo-npe-c1-2-r1
+    languages: [java]
+    severity: ERROR
+    message: >-
+      Cache read and populate are nested inside a guard that requires the derived
+      cache key to be non-null. When the key is null the cache is neither read nor
+      populated, so execution silently falls through to an uncached invocation and
+      the cache is defeated. A null key is a perfectly valid cache key: consult and
+      populate the cache unconditionally, and guard only on the cache object itself.
+    patterns:
+      - pattern: |
+          if (<... $KEY != null ...>) {
+            ...
+            $CACHE.get($KEY);
+            ...
+            $CACHE.put($KEY, ...);
+            ...
+          }
+      # Equivalent guards that validate the key itself (emptiness / length / size)
+      # make the cache access correct -- do not flag them.
+      - pattern-not-inside: |
+          if (<... $KEY.length() ...>) {
+            ...
+          }
+      - pattern-not-inside: |
+          if (<... $KEY.isEmpty() ...>) {
+            ...
+          }
+      - pattern-not-inside: |
+          if (<... $KEY.size() ...>) {
+            ...
+          }

@@ -1,0 +1,57 @@
+rules:
+  - id: dubbo-npe-c1-3-r1
+    languages: [java]
+    severity: ERROR
+    message: >-
+      URL username/password are populated only from the inline
+      "user:password@" userinfo segment of the parsed URL body, with no
+      fallback to the query-parameter credentials. When that segment is
+      absent (for example the URL body was truncated at '#'), the credentials
+      stay null and URL.getUsername()/URL.getPassword() return null, causing a
+      NullPointerException downstream. Default each credential from the
+      parameters map behind a null/empty guard before building the URL.
+    patterns:
+      - pattern-either:
+          # A URL body is truncated at '#' while parsing credentials ...
+          - pattern: $BODY.indexOf('#')
+          # ... and the credentials are taken only from the inline
+          # "user:password@" segment (gated by `$PWD_IDX > 0`).
+          - patterns:
+              - pattern: $STAR = $PWD_IDX + 1;
+              - pattern-inside: |
+                  if ($PWD_IDX > 0) {
+                    ...
+                  }
+      # Only URL parsing/building methods are of interest.
+      - pattern-inside: |
+          URL $M(...) {
+            ...
+          }
+      # Exclusion: the fix falls back to the parameters map when the
+      # credential is null (a null guard on the credential variable).
+      - pattern-not-inside: |
+          $RET $M(...) {
+            ...
+            if (<... $CRED == null ...>) {
+              ...
+            }
+            ...
+          }
+      # Exclusion: equivalent emptiness-based guards (e.g. isEmpty(x)).
+      - pattern-not-inside: |
+          $RET $M(...) {
+            ...
+            if (<... isEmpty($CRED) ...>) {
+              ...
+            }
+            ...
+          }
+      # Exclusion: equivalent emptiness-based guards (e.g. x.isEmpty()).
+      - pattern-not-inside: |
+          $RET $M(...) {
+            ...
+            if (<... $CRED.isEmpty() ...>) {
+              ...
+            }
+            ...
+          }

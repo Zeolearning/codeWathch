@@ -1,0 +1,21 @@
+{
+  "bug_id": "dubbo-npe-c1-2",
+  "method_deltas": [
+    {
+      "method": {
+        "fqcn": "com.alibaba.dubbo.cache.filter.CacheFilter",
+        "method_signature": "public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException",
+        "buggy_source": "    public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {\n        if (cacheFactory != null && ConfigUtils.isNotEmpty(invoker.getUrl().getMethodParameter(invocation.getMethodName(), Constants.CACHE_KEY))) {\n            Cache cache = cacheFactory.getCache(invoker.getUrl().addParameter(Constants.METHOD_KEY, invocation.getMethodName()));\n            if (cache != null) {\n                String key = StringUtils.toArgumentString(invocation.getArguments());\n                if (cache != null && key != null) {\n                    Object value = cache.get(key);\n                    if (value != null) {\n                        return new RpcResult(value);\n                    }\n                    Result result = invoker.invoke(invocation);\n                    if (!result.hasException()) {\n                        cache.put(key, result.getValue());\n                    }\n                    return result;\n                }\n            }\n        }\n        return invoker.invoke(invocation);\n    }",
+        "fixed_source": "    public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {\n        if (cacheFactory != null && ConfigUtils.isNotEmpty(invoker.getUrl().getMethodParameter(invocation.getMethodName(), Constants.CACHE_KEY))) {\n            Cache cache = cacheFactory.getCache(invoker.getUrl().addParameter(Constants.METHOD_KEY, invocation.getMethodName()));\n            if (cache != null) {\n                String key = StringUtils.toArgumentString(invocation.getArguments());\n                Object value = cache.get(key);\n                if (value != null) {\n                    return new RpcResult(value);\n                }\n                Result result = invoker.invoke(invocation);\n                if (!result.hasException()) {\n                    cache.put(key, result.getValue());\n                }\n                return result;\n            }\n        }\n        return invoker.invoke(invocation);\n    }"
+      },
+      "deltas": [
+        {
+          "node_type": "if_statement",
+          "buggy_text": "if (cacheFactory != null && ConfigUtils.isNotEmpty(invoker.getUrl().getMethodParameter(invocation.getMethodName(), Constants.CACHE_KEY))) {\n            Cache cache = cacheFactory.getCache(invoker.getUrl().addParameter(Constants.METHOD_KEY, invocation.getMethodName()));\n            if (cache != null) {\n                String key = StringUtils.toArgumentString(invocation.getArguments());\n                if (cache != null && key != null) {\n                    Object value = cache.get(key);\n                    if (value != null) {\n                        return new RpcResult(value);\n                    }\n                    Result result = invoker.invoke(invocation);\n                    if (!result.hasException()) {\n                        cache.put(key, result.getValue());\n                    }\n                    return result;\n                }\n            }\n        }",
+          "fixed_text": "if (cacheFactory != null && ConfigUtils.isNotEmpty(invoker.getUrl().getMethodParameter(invocation.getMethodName(), Constants.CACHE_KEY))) {\n            Cache cache = cacheFactory.getCache(invoker.getUrl().addParameter(Constants.METHOD_KEY, invocation.getMethodName()));\n            if (cache != null) {\n                String key = StringUtils.toArgumentString(invocation.getArguments());\n                Object value = cache.get(key);\n                if (value != null) {\n                    return new RpcResult(value);\n                }\n                Result result = invoker.invoke(invocation);\n                if (!result.hasException()) {\n                    cache.put(key, result.getValue());\n                }\n                return result;\n            }\n        }",
+          "change": "changed"
+        }
+      ]
+    }
+  ]
+}

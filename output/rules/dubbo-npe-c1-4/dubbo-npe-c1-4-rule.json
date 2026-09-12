@@ -1,0 +1,17 @@
+{
+  "rule_id": "dubbo-npe-c1-4-r2",
+  "bug_id": "dubbo-npe-c1-4",
+  "language": "java",
+  "yaml": "rules:\n  - id: dubbo-npe-c1-4-r1\n    languages:\n      - java\n    severity: ERROR\n    message: >-\n      The URL component field 'urlAddress' is dereferenced unconditionally.\n      'urlAddress' is left null by the no-arg constructor chain (URL() /\n      ServiceConfigURL() / URLBuilder()), so this delegation throws a\n      NullPointerException. Guard the field with a null check before using it.\n    patterns:\n      - pattern-either:\n          - pattern: |\n              $T $V = urlAddress.$M(...);\n              return $R($V);\n          - pattern: |\n              return urlAddress.$M(...);\n      - pattern-not-inside: |\n          if (<... urlAddress == null ...>) {\n            ...\n          }\n      - pattern-not-inside: |\n          if (<... urlAddress != null ...>) {\n            ...\n          }\n      - pattern-not-inside: |\n          urlAddress == null ? $A : $B\n      - pattern-not-inside: |\n          urlAddress != null ? $A : $B\n      - pattern-not-inside: |\n          if (...) {\n            ...\n          }",
+  "message": "The URL component field 'urlAddress' is dereferenced unconditionally. 'urlAddress' is left null by the no-arg constructor chain (URL() / ServiceConfigURL() / URLBuilder()), so this delegation throws a NullPointerException. Guard the field with a null check before using it.",
+  "severity": "ERROR",
+  "mode": "pattern",
+  "metadata": {
+    "generated_at": 1789120230.3666732,
+    "model": "deepseek-v4-flash",
+    "attempt": 2,
+    "explanation": "The corrected rule is accepted. \n\nKey fixes applied to eliminate the false positives:\n\n1. **Restricted to unconditional delegator shapes** — the rule now requires either a declaration-then-return pair (`$T $V = urlAddress.$M(...); return $R($V);`) or a direct `return urlAddress.$M(...)`. This silences:\n   - `buildString`: `host = urlAddress.getIp();` (a plain assignment, not a return/declaration-return)\n   - `CacheableFailbackRegistry`: `urlAddress.getTimestamp()` (deref inside an expression) and the local-variable usage.\n\n2. **Excluded derefs nested inside an `if` branch** (`pattern-not-inside: if (...) { ... }`) — this silences `getRawParameter`, whose `return urlAddress.getX();` accesses are each guarded inside `if (KEY.equals(key))` branches. The null-specific `if (<... urlAddress == null ...>)` and ternary exclusions keep the fix's guard class (early-return `if/else` and `?:`, any spelling) silent.\n\nThe rule still fires on all 16 expected buggy locations (`setProtocol/setUsername/setPassword/setHost/setPort/setAddress/setPath` and the `getAddress`/`getIp` delegators), since none of those unconditional delegations sit inside an `if`.",
+    "validation_ok": true,
+    "validation_msg": ""
+  }
+}
