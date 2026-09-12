@@ -27,3 +27,6 @@ tmp/
 # Test artifacts
 .pytest_cache/
 
+# Materialized per-case vul/fix workspaces (regenerable, git archive snapshots)
+/workspace/
+
