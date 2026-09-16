@@ -1,0 +1,160 @@
+{
+  "tree": "workspace/dubbo-npe-c1/case-1/vul",
+  "rule_desc": "The result of a nullable service-info lookup (getServiceInfo() / getValidServiceInfo()) is dereferenced without a null check. These lookups return null when no matching ServiceInfo exists, so the dereference can throw a NullPointerException. Guard the value before using it, e.g. if (serviceInfo == null) return ...; / if (serviceInfo != null) { ... } / serviceInfo == null ? ... : serviceInfo.method().",
+  "n_candidates": 600,
+  "n_applicable": 19,
+  "applicable": [
+    {
+      "signature": "public MethodDescriptor getMethod(String methodName, Class<?>[] paramTypes) {",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/rpc/model/StubServiceDescriptor.java",
+      "line": 96,
+      "return_null": true,
+      "getter": true,
+      "score": 3
+    },
+    {
+      "signature": "public MethodDescriptor getMethod(String methodName, Class<?>[] paramTypes) {",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/rpc/model/ReflectionServiceDescriptor.java",
+      "line": 121,
+      "return_null": true,
+      "getter": true,
+      "score": 3
+    },
+    {
+      "signature": "public String getMethodParameter(String method, String key) {",
+      "file": "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java",
+      "line": 253,
+      "return_null": true,
+      "getter": true,
+      "score": 3
+    },
+    {
+      "signature": "public String getAnyMethodParameter(String key) {",
+      "file": "dubbo-registry/dubbo-registry-api/src/main/java/org/apache/dubbo/registry/client/InstanceAddressURL.java",
+      "line": 455,
+      "return_null": true,
+      "getter": true,
+      "score": 3
+    },
+    {
+      "signature": "public String getGroup() {",
+      "file": "dubbo-rpc/dubbo-rpc-api/src/main/java/org/apache/dubbo/rpc/RpcServiceContext.java",
+      "line": 553,
+      "return_null": true,
+      "getter": true,
+      "score": 3
+    },
+    {
+      "signature": "public String getVersion() {",
+      "file": "dubbo-rpc/dubbo-rpc-api/src/main/java/org/apache/dubbo/rpc/RpcServiceContext.java",
+      "line": 561,
+      "return_null": true,
+      "getter": true,
+      "score": 3
+    },
+    {
+      "signature": "public String getInterfaceName() {",
+      "file": "dubbo-rpc/dubbo-rpc-api/src/main/java/org/apache/dubbo/rpc/RpcServiceContext.java",
+      "line": 569,
+      "return_null": true,
+      "getter": true,
+      "score": 3
+    },
+    {
+      "signature": "public String getProtocol() {",
+      "file": "dubbo-rpc/dubbo-rpc-api/src/main/java/org/apache/dubbo/rpc/RpcServiceContext.java",
+      "line": 577,
+      "return_null": true,
+      "getter": true,
+      "score": 3
+    },
+    {
+      "signature": "public String getServiceKey() {",
+      "file": "dubbo-rpc/dubbo-rpc-api/src/main/java/org/apache/dubbo/rpc/RpcServiceContext.java",
+      "line": 585,
+      "return_null": true,
+      "getter": true,
+      "score": 3
+    },
+    {
+      "signature": "public String getProtocolServiceKey() {",
+      "file": "dubbo-rpc/dubbo-rpc-api/src/main/java/org/apache/dubbo/rpc/RpcServiceContext.java",
+      "line": 593,
+      "return_null": true,
+      "getter": true,
+      "score": 3
+    },
+    {
+      "signature": "public ServiceDescriptor getService(String serviceName) {",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/rpc/model/ModuleServiceRepository.java",
+      "line": 198,
+      "return_null": true,
+      "getter": false,
+      "score": 2
+    },
+    {
+      "signature": "public ServiceDescriptor lookupService(String interfaceName) {",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/rpc/model/ModuleServiceRepository.java",
+      "line": 207,
+      "return_null": true,
+      "getter": false,
+      "score": 2
+    },
+    {
+      "signature": "public ServiceInfo getNoProtocolServiceInfo(String serviceKeyWithoutProtocol) {",
+      "file": "dubbo-metadata/dubbo-metadata-api/src/main/java/org/apache/dubbo/metadata/MetadataInfo.java",
+      "line": 232,
+      "return_null": true,
+      "getter": false,
+      "score": 2
+    },
+    {
+      "signature": "public ServiceInfo getValidServiceInfo(String serviceKey) {",
+      "file": "dubbo-metadata/dubbo-metadata-api/src/main/java/org/apache/dubbo/metadata/MetadataInfo.java",
+      "line": 243,
+      "return_null": true,
+      "getter": false,
+      "score": 2
+    },
+    {
+      "signature": "public Object decode(Channel channel, ChannelBuffer buffer) throws IOException {",
+      "file": "dubbo-remoting/dubbo-remoting-api/src/main/java/org/apache/dubbo/remoting/transport/codec/TransportCodec.java",
+      "line": 52,
+      "return_null": false,
+      "getter": true,
+      "score": 1
+    },
+    {
+      "signature": "public String getVersion() {",
+      "file": "dubbo-remoting/dubbo-remoting-api/src/main/java/org/apache/dubbo/remoting/exchange/Request.java",
+      "line": 75,
+      "return_null": false,
+      "getter": true,
+      "score": 1
+    },
+    {
+      "signature": "public Object getData() {",
+      "file": "dubbo-remoting/dubbo-remoting-api/src/main/java/org/apache/dubbo/remoting/exchange/Request.java",
+      "line": 112,
+      "return_null": false,
+      "getter": true,
+      "score": 1
+    },
+    {
+      "signature": "public String getVersion() {",
+      "file": "dubbo-remoting/dubbo-remoting-api/src/main/java/org/apache/dubbo/remoting/exchange/Response.java",
+      "line": 113,
+      "return_null": false,
+      "getter": true,
+      "score": 1
+    },
+    {
+      "signature": "public Object getResult() {",
+      "file": "dubbo-remoting/dubbo-remoting-api/src/main/java/org/apache/dubbo/remoting/exchange/Response.java",
+      "line": 153,
+      "return_null": false,
+      "getter": true,
+      "score": 1
+    }
+  ]
+}

@@ -1,0 +1,87 @@
+{
+  "case_id": "dubbo-npe-c1-4",
+  "nullable_accessors": [
+    {
+      "name": "urlAddress",
+      "kind": "field",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "Default ctor URL() sets this.urlAddress = null at :137; ctor assigns param without null check at :147. Sibling accessors dereference unguarded at :352 setProtocol, :361 setUsername, :370 setPassword, :428 setHost, :438 setPort, :448 getAddress, :461 setAddress, :466 getIp, :502 setPath, :1171-1186 getRawParameter, :1292 buildString. Same class guards it with ternaries at :348, :357, :366, :424, :434, :498."
+    },
+    {
+      "name": "getUrlAddress()",
+      "kind": "getter",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:339-341 returns `urlAddress`; callers pass it to constructors unguarded, e.g. DubboServiceAddressURL.java:39, InstanceAddressURL.java:132/137/142/147, NacosRegistry.java:637."
+    },
+    {
+      "name": "URL.getUrlParameter(String)",
+      "kind": "lookup",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:668 explicit `return null;`."
+    },
+    {
+      "name": "URL.getServiceKey()",
+      "kind": "lookup",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:1367-1368 `if (inf == null) return null;`."
+    },
+    {
+      "name": "URL.getPathKey()",
+      "kind": "lookup",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:1394-1395 `if (inf == null) return null;`."
+    },
+    {
+      "name": "URL.getScopeModel()",
+      "kind": "lookup",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:610-612 returns `getAttribute(...)`; URL.getAttribute can return null at URL.java:1646."
+    },
+    {
+      "name": "URL.getServiceModel()",
+      "kind": "lookup",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:634-636 returns `getAttribute(...)`; URL.getAttribute can return null at URL.java:1646."
+    },
+    {
+      "name": "consumerURL",
+      "kind": "field",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/rpc/cluster/directory/ServiceAddressURL.java",
+      "evidence": "Assigned from ctor param without check at ServiceAddressURL.java:53,58; guarded at :110, :122, :137 (`if (consumerURL != null)`); unguarded derefs at :67 getPath, :72 getServiceInterface, :77 getApplication, :158 getParameter, :195 getScopeModel, :200 getServiceModel, :236-237 getParameters; also DubboServiceAddressURL.java:56 getSide, :122, :127."
+    },
+    {
+      "name": "overrideURL",
+      "kind": "field",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/rpc/cluster/directory/DubboServiceAddressURL.java",
+      "evidence": "Optional field at DubboServiceAddressURL.java:42, injected via ctor param at :46 and null-accepting setter setOverrideURL at :116; guarded at :62, :74, :86, :103, :133, :154."
+    },
+    {
+      "name": "instance",
+      "kind": "field",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/rpc/cluster/directory/InstanceAddressURL.java",
+      "evidence": "InstanceAddressURL.java:50-51 fields; default ctor nulls both at :60-62 `this(null, null, null)`; instance guard at :646 (`if (instance == null)`); unguarded derefs at :152 getAddress, :157 getHost, :162 getPort, :167 getIp, :172 getRemoteApplication, :406 getInstance().getAllParams(), :433, :444, :454, :583, :593, :636 getInstance().equals(...), :641 getInstance().hashCode()."
+    },
+    {
+      "name": "metadataInfo",
+      "kind": "field",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/rpc/cluster/directory/InstanceAddressURL.java",
+      "evidence": "InstanceAddressURL.java:50-51 fields; default ctor nulls both at :60-62; metadataInfo guarded at :236, :407, :649; unguarded deref at :566 `return metadataInfo.getValidServiceInfo(protocolServiceKey);`."
+    },
+    {
+      "name": "RpcContext.getServiceContext().getConsumerUrl()",
+      "kind": "lookup",
+      "file": "dubbo-common/src/main/java/org/apache/dubbo/rpc/cluster/directory/InstanceAddressURL.java",
+      "evidence": "InstanceAddressURL.java:605 dereferences unguarded `return RpcContext.getServiceContext().getConsumerUrl().getServiceModel();`; guarded sibling form exists at :598-600 `Optional.ofNullable(...).map(URL::getScopeModel)`."
+    }
+  ],
+  "guard_forms": [
+    "Ternary null-check: URL.java:348,357,366,424,434,498; URL.java:1266; InstanceAddressURL.java:407-409, :646.",
+    "if-null early return: URL.java:663-668 (getUrlParameter), :1367-1368 (getServiceKey), :1394-1395 (getPathKey); InstanceAddressURL.java:187-189, :266-268, :316-323, :335-337, :376-378, :505-507.",
+    "if-null lazy init / mutation: URL.java:640-642, :647-649, :655-657, :1655-1657; InstanceAddressURL.java:539-541, :557-559; OverrideInstanceAddressURL.java:250-252.",
+    "Optional.ofNullable: InstanceAddressURL.java:598-600.",
+    "Objects.equals: URL.java:1558; DubboServiceAddressURL.java:158.",
+    "String/collection emptiness as de-facto null guard: StringUtils.isEmpty/isNotEmpty e.g. URL.java:667, InstanceAddressURL.java:184,218,290; CollectionUtils.isNotEmptyMap URL.java:1250.",
+    "Fix's new form: `if (urlAddress == null) { return new ServiceConfigURL(...); } else { ... }` (patch.diff lines 8-13 etc.)."
+  ],
+  "notes": "Defect trait: a field that is legitimately null, dereferenced by an accessor without a guard. `OverrideInstanceAddressURL.originUrl` is ctor-assigned and dereferenced but no guard was found to prove nullability, so it is not listed."
+}

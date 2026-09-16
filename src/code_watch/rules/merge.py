@@ -30,7 +30,9 @@ Excluded cases that still fire on the buggy tree are recorded as bonus recall
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import re
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -40,6 +42,7 @@ from pydantic import BaseModel, Field
 
 from code_watch.config import CodeWatchConfig
 from code_watch.llm import get_llm
+from code_watch.fieldstudy import FieldStudy, load_or_study, repo_candidate_study
 from code_watch.rules.delta import (
     added_lines_from_patch,
     expected_from_patch,
@@ -89,6 +92,7 @@ class CaseResult:
     rule: Rule
     evaluation: RuleEvaluation
     expected: list[str] = field(default_factory=list)
+    study: FieldStudy | None = None
 
     @property
     def cluster(self) -> str:
@@ -133,6 +137,7 @@ def load_case_result(
     *,
     skip_existing: bool = True,
     refresh_analysis: bool = False,
+    refresh_study: bool = False,
     max_attempts: int = 3,
     verbose: bool = True,
 ) -> CaseResult:
@@ -162,7 +167,8 @@ def load_case_result(
             refresh_analysis=refresh_analysis, verbose=verbose, max_attempts=max_attempts,
         )
 
-    return CaseResult(case=case, rule=rule, evaluation=evaluation, expected=expected)
+    study = load_or_study(case, config, refresh=refresh_study, verbose=verbose)
+    return CaseResult(case=case, rule=rule, evaluation=evaluation, expected=expected, study=study)
 
 
 # --- fold construction ---------------------------------------------------------- #
@@ -207,12 +213,40 @@ def _rule_from_fold(cluster: str, step_no: int, step: FoldStep, source_ids: list
     )
 
 
+def _fold_cache_path(model: str, history: list) -> Path:
+    payload = json.dumps(
+        {"model": model, "msgs": [str(getattr(m, "content", "")) for m in history]},
+        ensure_ascii=False,
+    )
+    return Path("output/foldcache") / (hashlib.sha1(payload.encode("utf-8")).hexdigest() + ".json")
+
+
+def _invoke_fold_step(llm, model_name: str, history: list, *, verbose: bool = True) -> FoldStep | None:
+    """One fold-step LLM call with a disk cache keyed by (model, history text).
+
+    Rewind rounds append feedback to the history, which changes the key — only
+    genuinely new prompts cost tokens; identical re-rolls are free.
+    """
+    cache = _fold_cache_path(model_name, history)
+    if cache.exists():
+        try:
+            return FoldStep.model_validate_json(cache.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    step = llm.with_structured_output(FoldStep, method="json_mode").invoke(history)
+    if step is not None and step.action in ("merge", "exclude"):
+        cache.parent.mkdir(parents=True, exist_ok=True)
+        cache.write_text(step.model_dump_json(), encoding="utf-8")
+    return step
+
+
 def _run_fold(
     order: list[CaseResult],
     llm,
     *,
     feedback_at_step: dict[int, list[str]] | None = None,
     histories: dict[int, list] | None = None,
+    repo_candidates: list[str] | None = None,
     verbose: bool = True,
 ) -> _FoldState:
     """Run fold steps (optionally restarting from `feedback_at_step` keys).
@@ -238,6 +272,7 @@ def _run_fold(
         step_no = steps
         prompt = build_fold_step_prompt(
             cluster, step_no, acc_rule, commonality, covered, excluded, result,
+            next_study=result.study, repo_candidates=repo_candidates,
         )
         history = histories.get(step_no)
         if history is None or step_no not in feedback_at_step:
@@ -247,9 +282,10 @@ def _run_fold(
         histories[step_no] = history
 
         step: FoldStep | None = None
+        model_name = ""
         for retry in range(2):  # one inline corrective retry for malformed output
             try:
-                step = llm.with_structured_output(FoldStep, method="json_mode").invoke(history)
+                step = _invoke_fold_step(llm, llm.model_name if hasattr(llm, "model_name") else "", history, verbose=verbose)
                 break
             except Exception as e:
                 if verbose:
@@ -402,6 +438,7 @@ def merge_rules(
     config: CodeWatchConfig | None = None,
     *,
     max_rounds: int = 3,
+    repo_candidates: list[str] | None = None,
     verbose: bool = True,
 ) -> MergeOutcome:
     """The merge loop: FOLD construction -> final gate -> attributed rewind (<= max_rounds)."""
@@ -605,7 +642,21 @@ def run_cluster_loop(
         for d in case_dirs
     ]
 
-    outcome = merge_rules(case_results, config, max_rounds=max_rounds, verbose=verbose)
+    # 仓库级可空候选发现(两级漏斗:文本粗筛缓存 + LLM 适用性判断缓存)
+    seed_tree = case_results[0].case.vul_dir
+    rule_desc = (
+        case_results[0].rule.message
+        or f"{case_results[0].case.vtype} NPE family: {case_results[0].cluster_label}"
+    )
+    repo_study = repo_candidate_study(seed_tree, rule_desc, config, verbose=verbose)
+
+    outcome = merge_rules(
+        case_results, config, max_rounds=max_rounds, verbose=verbose,
+        repo_candidates=[
+            f"{c['signature']} [{c['file']}:{c['line']}]"
+            for c in repo_study["applicable"]
+        ],
+    )
 
     out_prefix = out_prefix_for(outcome.cluster)
     Path(out_prefix).parent.mkdir(parents=True, exist_ok=True)

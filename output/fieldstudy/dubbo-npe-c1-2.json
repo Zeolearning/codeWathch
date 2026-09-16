@@ -1,0 +1,23 @@
+{
+  "case_id": "dubbo-npe-c1-2",
+  "nullable_accessors": [
+    {
+      "name": "cache",
+      "kind": "local variable",
+      "file": "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java",
+      "evidence": "cache.get(key); cache.put(key, result.getValue())"
+    },
+    {
+      "name": "key",
+      "kind": "local variable",
+      "file": "dubbo-filter/dubbo-filter-cache/src/main/java/com/alibaba/dubbo/cache/filter/CacheFilter.java",
+      "evidence": "cache.get(key); cache.put(key, result.getValue())"
+    }
+  ],
+  "guard_forms": [
+    "if (value != null)",
+    "if (cacheFactory != null && ConfigUtils.isNotEmpty(...))",
+    "if (cache != null && key != null)"
+  ],
+  "notes": "The patch removed the combined null guard `if (cache != null && key != null)` around cache access. `cache` is obtained from `cacheFactory.getCache(...)` and may be null; `key` may be null. Without the guard, `cache.get(key)` and `cache.put(key, result.getValue())` can throw NullPointerException."
+}

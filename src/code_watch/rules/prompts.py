@@ -311,6 +311,8 @@ def build_fold_step_prompt(
     covered_ids: list[str],
     excluded: list[dict],
     next_result,
+    next_study=None,
+    repo_candidates: list[str] | None = None,
 ) -> str:
     """Prompt for ONE fold step: absorb `next_result` into the accumulated rule,
     or exclude the case with a reason."""
@@ -319,6 +321,34 @@ def build_fold_step_prompt(
         "\n".join(f"- {e['case_id']}: {e['reason']}" for e in excluded) or "(none)"
     )
     next_block = _case_block_for_fold(next_result.case, next_result.rule, next_result.evaluation)
+    study_block = ""
+    if next_study is not None and getattr(next_study, "nullable_accessors", None):
+        facts = "\n".join(
+            f"- {a.name} ({a.kind}) — {a.evidence}" + (f" [{a.file}]" if a.file else "")
+            for a in next_study.nullable_accessors
+        )
+        guards = "; ".join(next_study.guard_forms)
+        study_block = f"""
+## Field study of this case's tree (static survey of unlabeled code)
+Nullable-accessor candidates:
+{facts}
+Guard forms in use: {guards or '(not recorded)'}
+When generalizing, include study candidates that share the defect trait via \
+metavariable-regex — these names are evidenced from code, not from any fix. \
+Do not invent names that are neither in the patches nor in the study.
+"""
+    repo_block = ""
+    if repo_candidates:
+        listing = "\n".join(f"- {c}" for c in repo_candidates[:60])
+        more = f"\n... and {len(repo_candidates) - 60} more" if len(repo_candidates) > 60 else ""
+        repo_block = f"""
+## Repo-wide candidate survey (methods judged nullable for this rule family)
+{listing}{more}
+These are code-evidenced candidates across the whole repository. When generalizing, treat \
+them as candidate members of the nullable-value family: extend accessor/shape sets via \
+metavariable-regex where consistent with the patches. Do not force-include candidates \
+whose shape contradicts the covered cases.
+"""
     return f"""You are building ONE generalized Semgrep rule for bug-fix cluster {cluster} by folding in cases one at a time.
 
 ## Current accumulated rule (step {step_no - 1})
@@ -330,7 +360,8 @@ Commonality so far: {acc_commonality or '(seed case — write the initial patter
 Excluded so far: {excluded_summaries}
 
 {next_block}
-
+{study_block}
+{repo_block}
 Decide:
 - "merge" — if this case shares the SAME defect shape (generalize the accumulated rule: metavariables for case-specific names, keep the invariant; the merged rule must STILL fire on every already-covered case's buggy tree and stay silent on all their fixed trees). When you widen the pattern, WIDEN THE GUARD EXCLUSIONS TOO: every null-check/ternary/early-return guard form appearing in the covered cases' FIXED trees must be excluded via pattern-not-inside/pattern-not over the generalized metavariables — firing on any covered case's fixed tree fails the gate.
 - "exclude" — if this case's fix addresses a genuinely different defect shape. Give a real reason; do not exclude merely because generalizing is hard — over-exclusion wastes recall, under-generalization fails the gate.

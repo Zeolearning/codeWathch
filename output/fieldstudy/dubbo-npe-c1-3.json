@@ -1,0 +1,135 @@
+{
+  "case_id": "dubbo-npe-c1-3",
+  "nullable_accessors": [
+    {
+      "name": "parameters",
+      "kind": "local",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java",
+      "evidence": "Map<String,String> parameters = null; at :50 and :211; conditionally assigned and passed unguarded into parseURLBody(...) at :59/:221 and ServiceConfigURL ctor at :174; this is the value guarded by the fix."
+    },
+    {
+      "name": "username",
+      "kind": "local",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java",
+      "evidence": "String username = null; at :137; assigned only inside if (pwdEndIdx > 0) at :140-147; fix adds username == null guard."
+    },
+    {
+      "name": "password",
+      "kind": "local",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java",
+      "evidence": "String password = null; at :138; assigned only inside if (passwordStartIdx != -1) at :142-144; fix adds password == null guard."
+    },
+    {
+      "name": "protocol",
+      "kind": "local",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java",
+      "evidence": "String protocol = null; at :110; assigned only under protoEndIdx >= 0 at :116/:125."
+    },
+    {
+      "name": "path",
+      "kind": "local",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java",
+      "evidence": "String path = null; at :130; assigned only under pathStartIdx >= 0 at :133."
+    },
+    {
+      "name": "host",
+      "kind": "local",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URLStrParser.java",
+      "evidence": "String host = null; at :151; assigned only under if (endIdx > starIdx) at :166-168."
+    },
+    {
+      "name": "host",
+      "kind": "field",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLAddress.java",
+      "evidence": "field at :32; re-declared null in createPathURLAddress at :207 and assigned only inside if (i >= 0 && i < decodeStr.length() - 1) at :244-254; dereferenced without guard in URLAddress.hashCode() at :133 (host.hashCode()). Reachability caveat: PathURLAddress overrides hashCode safely at PathURLAddress.java:126 and createURLAddress normally sets host non-null at :196/:199."
+    },
+    {
+      "name": "URLAddress.getHost()",
+      "kind": "accessor",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLAddress.java",
+      "evidence": "getHost() at :84-86 returns the nullable host field."
+    },
+    {
+      "name": "PathURLAddress.getProtocol/getUsername/getPassword/getPath",
+      "kind": "accessor",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/PathURLAddress.java",
+      "evidence": "getters at :55,63,71,79 return fields copied from possibly-null ctor args at :41-52."
+    },
+    {
+      "name": "URL.getUsername()/getPassword()",
+      "kind": "accessor",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:374-390; explicit urlAddress == null ? null : ... i.e. documented-nullable."
+    },
+    {
+      "name": "URL.getPath()",
+      "kind": "accessor",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:536-538; URL.getAbsolutePath() consumes it at :550-554."
+    },
+    {
+      "name": "URL.getProtocol()",
+      "kind": "accessor",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:361-363."
+    },
+    {
+      "name": "URL.getScopeModel()/getServiceModel()",
+      "kind": "accessor",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:664-666 and :688-690 return from the attribute map, which can miss and thus return null."
+    },
+    {
+      "name": "URLParam.getParameter(String)",
+      "kind": "lookup",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLParam.java",
+      "evidence": "URLParam.java:803-823: return EXTRA_PARAMS.get(key) at :806 and explicit return null at :822; Javadoc confirms null if key is absent."
+    },
+    {
+      "name": "URL.getParameter(String)",
+      "kind": "lookup",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:599-601 delegates straight to URLParam.getParameter and returns null; default-value overload adds guard at :603-606."
+    },
+    {
+      "name": "URL.getUrlParameter(String)",
+      "kind": "lookup",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/URL.java",
+      "evidence": "URL.java:692-698 has literal return null path."
+    },
+    {
+      "name": "URLItemCache.intern(String)",
+      "kind": "lookup",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLItemCache.java",
+      "evidence": "URLItemCache.java:68-73 returns input unchanged when blank, i.e. intern(null) -> null; called unguarded at URLStrParser.java:171."
+    },
+    {
+      "name": "URLItemCache.checkPath(String)",
+      "kind": "lookup",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLItemCache.java",
+      "evidence": "URLItemCache.java:46-55 returns path unchanged when blank, so it can return null; called unguarded at URLStrParser.java:172."
+    },
+    {
+      "name": "URLItemCache.checkRevision(String)",
+      "kind": "lookup",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/URLItemCache.java",
+      "evidence": "URLItemCache.java:57-66 same null pass-through behavior."
+    },
+    {
+      "name": "ServiceAddressURL.getParameter(String)",
+      "kind": "lookup",
+      "file": "vul/dubbo-common/src/main/java/org/apache/dubbo/common/url/component/ServiceAddressURL.java",
+      "evidence": "ServiceAddressURL.java:125-132: local value = null then EXTRA/map lookups."
+    }
+  ],
+  "guard_forms": [
+    "index/bounds guard before use, e.g. if (poundIndex != -1) URLStrParser.java:106; if (protoEndIdx >= 0) :112; if (pathStartIdx >= 0) :132; if (pwdEndIdx > 0) :140; if (endIdx > starIdx) :166",
+    "null-check plus emptiness before use: parameters != null && StringUtils.isNotEmpty(...) in the fix; StringUtils.isEmpty(value) ? defaultValue : value at URL.java:605; if (StringUtils.isEmpty(value)) at ServiceAddressURL.java:129; StringUtils.isBlank/isNotBlank at URLItemCache.java:33,38,47,51,58,62,69,76 with helpers at StringUtils.java:414,433,453,513",
+    "null-ternary on a field: urlAddress == null ? null : ... at URL.java:362,375,389,537; path != null && !path.startsWith(slash) at URL.java:551; parameters != null ? new HashMap<>(parameters) : new HashMap<>(0) at Parameters.java:51",
+    "default-value fallback overloads: URL.getParameter(String,String) at URL.java:603-606 and the getParameter(key,defaultValue) family",
+    "Objects.equals / Objects.hash for nullable comparison safety: PathURLAddress.java:126 and :134-139; URLAddress.java:141-146",
+    "Objects.requireNonNull for fail-fast injection: ConcurrentHashMapUtils.java:34; TripleProtocol.java:178; GaugeMetricSample.java:80-81",
+    "getOrNull-style resolution instead of dereference: URL.java:677 ScopeModelUtil.getOrNullApplicationModel"
+  ],
+  "notes": "Trait learned from the fix: a value from a conditionally-assigned field/local or a null-returning lookup is consumed/dereferenced without an adjacent null guard; the patch adds parameters != null plus StringUtils.isNotEmpty guards for username/password. The URLAddress.hashCode()/host item has conditional reachability: PathURLAddress overrides hashCode safely and createURLAddress normally sets host non-null."
+}

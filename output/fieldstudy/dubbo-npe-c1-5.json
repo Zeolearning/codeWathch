@@ -1,0 +1,15 @@
+{
+  "case_id": "dubbo-npe-c1-5",
+  "nullable_accessors": [
+    {
+      "name": "path",
+      "kind": "method_return",
+      "file": "dubbo-rpc/dubbo-rpc-dubbo/src/main/java/org/apache/dubbo/rpc/protocol/dubbo/DubboProtocol.java",
+      "evidence": "String path = inv.getAttachments().get(Constants.PATH_KEY); followed by the added null check if (path == null)"
+    }
+  ],
+  "guard_forms": [
+    "if (path == null) { throw new RemotingException(channel, \"Service path is missing from the invocation...\"); }"
+  ],
+  "notes": "The patch adds a null check for the invocation path obtained from attachments. The nullable accessor is Map.get(Constants.PATH_KEY), which returns null when the PATH_KEY attachment is absent. case_id=dubbo-npe-c1-5"
+}
